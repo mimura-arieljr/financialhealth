@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
-import Layout from './components/layout/Layout'
-import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import Expenses from './pages/Expenses'
-import Revenues from './pages/Revenues'
-import Settings from './pages/Settings'
+import Layout from './components/layout/layout'
+import Login from './pages/login'
+import Dashboard from './pages/dashboard'
+import Expenses from './pages/expenses'
+import Revenues from './pages/revenues'
+import Settings from './pages/settings'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()

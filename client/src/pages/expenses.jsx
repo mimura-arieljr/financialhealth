@@ -5,6 +5,22 @@ import { useAuth } from '../hooks/useAuth'
 const fmt = (n) => Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })
 const today = () => new Date().toISOString().split('T')[0]
 
+function isDueToday(item) {
+  const now = new Date()
+  const todayDate = now.toISOString().split('T')[0]
+
+  // Already logged today
+  if (item.last_logged === todayDate) return false
+
+  if (item.frequency === 'monthly') {
+    return now.getDate() === item.day_of_month
+  }
+  if (item.frequency === 'weekly') {
+    return now.getDay() === item.day_of_week
+  }
+  return false
+}
+
 function ErrorBanner({ message }) {
   if (!message) return null
   return (
@@ -156,6 +172,10 @@ export default function Expenses() {
   const [filterBank, setFilterBank] = useState('')
   const [filterMonth, setFilterMonth] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
+  const [settlingCard, setSettlingCard] = useState(null)
+  const [dueItems, setDueItems] = useState([])
+  const [loggingDue, setLoggingDue] = useState(null)
+  const [dismissedDue, setDismissedDue] = useState([])
 
   useEffect(() => {
     if (!user?.id) return
@@ -215,6 +235,70 @@ export default function Expenses() {
     setRefreshKey(k => k + 1)
   }
 
+  // Fetch due recurring expenses
+  useEffect(() => {
+    if (!user?.id) return
+    supabase
+      .from('recurring_expenses')
+      .select(`id, description, amount, frequency, day_of_month, day_of_week,
+        last_logged, category_id, bank_id, credit_card_id`)
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .then(({ data }) => {
+        if (data) setDueItems(data.filter(isDueToday))
+      })
+  }, [user?.id, refreshKey])
+
+  const handleLogDue = async (item) => {
+    setLoggingDue(item.id)
+    const todayStr = today()
+    const { error } = await supabase.from('expenses').insert({
+      user_id: user.id,
+      description: item.description,
+      amount: item.amount,
+      date: todayStr,
+      category_id: item.category_id,
+      bank_id: item.bank_id,
+      credit_card_id: item.credit_card_id,
+      is_card_settled: item.credit_card_id ? false : null,
+    })
+    if (!error) {
+      await supabase
+        .from('recurring_expenses')
+        .update({ last_logged: todayStr })
+        .eq('id', item.id)
+      setDismissedDue(d => [...d, item.id])
+      setRefreshKey(k => k + 1)
+    }
+    setLoggingDue(null)
+  }
+
+  const handleSettleCard = async (creditCardId) => {
+    setSettlingCard(creditCardId)
+    const { error } = await supabase
+      .from('expenses')
+      .update({ is_card_settled: true })
+      .eq('user_id', user.id)
+      .eq('credit_card_id', creditCardId)
+      .eq('is_card_settled', false)
+    if (!error) setRefreshKey(k => k + 1)
+    setSettlingCard(null)
+  }
+
+  // Group unsettled card expenses by credit card
+  const unsettledByCard = creditCards
+    .map(cc => ({
+      ...cc,
+      unsettledExpenses: expenses.filter(
+        e => e.credit_card_id === cc.id && e.is_card_settled === false
+      )
+    }))
+    .filter(cc => cc.unsettledExpenses.length > 0)
+    .map(cc => ({
+      ...cc,
+      total: cc.unsettledExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
+    }))
+
   const filtered = expenses.filter(e => {
     if (filterCategory && e.categories?.id !== filterCategory) return false
     if (filterBank && e.banks?.id !== filterBank) return false
@@ -243,6 +327,72 @@ export default function Expenses() {
           Add Expense
         </button>
       </div>
+
+      {/* Due Recurring Expenses */}
+      {dueItems.filter(i => !dismissedDue.includes(i.id)).length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Due Today</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {dueItems
+              .filter(i => !dismissedDue.includes(i.id))
+              .map(item => (
+                <div key={item.id} className="bg-neutral-900 border border-emerald-500/20 rounded-xl px-4 py-3.5 flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-sm text-white font-medium truncate">{item.description}</p>
+                    <p className="text-xs text-neutral-500 mt-0.5 font-mono">₱{fmt(item.amount)}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => handleLogDue(item)}
+                      disabled={loggingDue === item.id}
+                      className="bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 text-emerald-400 text-xs font-semibold rounded-lg px-3 py-1.5 border border-emerald-500/20 transition-colors whitespace-nowrap"
+                    >
+                      {loggingDue === item.id ? 'Logging...' : 'Log'}
+                    </button>
+                    <button
+                      onClick={() => setDismissedDue(d => [...d, item.id])}
+                      className="text-neutral-600 hover:text-neutral-400 transition-colors p-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Unsettled Card Balances */}
+      {unsettledByCard.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Unsettled Card Charges</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {unsettledByCard.map(cc => (
+              <div key={cc.id} className="bg-neutral-900 border border-yellow-500/20 rounded-xl px-4 py-3.5 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm text-white font-medium">{cc.name}</p>
+                  <p className="text-xs text-neutral-500 mt-0.5">
+                    {cc.unsettledExpenses.length} charge{cc.unsettledExpenses.length !== 1 ? 's' : ''} · <span className="font-mono text-yellow-400">₱{fmt(cc.total)}</span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (confirm(`Mark all ${cc.name} charges as settled?\n\n₱${fmt(cc.total)} across ${cc.unsettledExpenses.length} expense${cc.unsettledExpenses.length !== 1 ? 's' : ''}`)) {
+                      handleSettleCard(cc.id)
+                    }
+                  }}
+                  disabled={settlingCard === cc.id}
+                  className="shrink-0 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 text-emerald-400 text-xs font-semibold rounded-lg px-3 py-1.5 border border-emerald-500/20 transition-colors whitespace-nowrap"
+                >
+                  {settlingCard === cc.id ? 'Settling...' : 'Settle All'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap mb-6">

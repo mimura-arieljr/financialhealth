@@ -5,6 +5,7 @@ import Login from './pages/login'
 import Dashboard from './pages/dashboard'
 import Expenses from './pages/expenses'
 import Revenues from './pages/revenues'
+import Recurring from './pages/recurring'
 import Settings from './pages/settings'
 
 function ProtectedRoute({ children }) {
@@ -34,6 +35,7 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="expenses" element={<Expenses />} />
           <Route path="revenues" element={<Revenues />} />
+          <Route path="recurring" element={<Recurring />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

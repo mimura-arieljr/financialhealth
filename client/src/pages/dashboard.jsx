@@ -99,12 +99,13 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user?.id) return
     const fetchAll = async () => {
-      const [banksRes, expensesRes, revenuesRes, ccsRes, categoriesRes] = await Promise.all([
+      const [banksRes, expensesRes, revenuesRes, ccsRes, categoriesRes, transfersRes] = await Promise.all([
         supabase.from('banks').select('id, name, initial_balance').eq('user_id', user.id),
         supabase.from('expenses').select('amount, date, bank_id, credit_card_id, is_card_settled, category_id').eq('user_id', user.id),
         supabase.from('revenues').select('amount, date, bank_id').eq('user_id', user.id),
         supabase.from('credit_cards').select('id, name').eq('user_id', user.id),
         supabase.from('categories').select('id, name').eq('user_id', user.id),
+        supabase.from('transfers').select('amount, date, from_bank_id, to_bank_id').eq('user_id', user.id),
       ])
 
       const banks = banksRes.data || []
@@ -112,6 +113,7 @@ export default function Dashboard() {
       const revenues = revenuesRes.data || []
       const creditCards = ccsRes.data || []
       const categories = categoriesRes.data || []
+      const transfers = transfersRes.data || []
 
       // ── Bank balances ──────────────────────────────────────────────────
       const bankMap = banks.map(bank => {
@@ -121,9 +123,15 @@ export default function Dashboard() {
         const income = revenues
           .filter(r => r.bank_id === bank.id)
           .reduce((sum, r) => sum + Number(r.amount), 0)
+        const transfersOut = transfers
+          .filter(t => t.from_bank_id === bank.id)
+          .reduce((sum, t) => sum + Number(t.amount), 0)
+        const transfersIn = transfers
+          .filter(t => t.to_bank_id === bank.id)
+          .reduce((sum, t) => sum + Number(t.amount), 0)
         return {
           ...bank,
-          current_balance: Number(bank.initial_balance) - spent + income
+          current_balance: Number(bank.initial_balance) - spent + income - transfersOut + transfersIn
         }
       })
       setBankBalances(bankMap)

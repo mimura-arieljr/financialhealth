@@ -143,7 +143,7 @@ export default function Layout() {
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors ${
+              `flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] leading-tight transition-colors [&>svg]:w-3.5 [&>svg]:h-3.5 ${
                 isActive ? 'text-emerald-400' : 'text-neutral-500'
               }`
             }
@@ -154,9 +154,9 @@ export default function Layout() {
         ))}
         <button
           onClick={handleSignOut}
-          className="flex-1 flex flex-col items-center gap-1 py-3 text-xs text-neutral-500"
+          className="flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] leading-tight text-neutral-500 [&>svg]:w-3.5 [&>svg]:h-3.5"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
           </svg>
           <span>Sign out</span>

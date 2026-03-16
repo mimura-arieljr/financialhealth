@@ -176,6 +176,8 @@ export default function Expenses() {
   const [dueItems, setDueItems] = useState([])
   const [loggingDue, setLoggingDue] = useState(null)
   const [dismissedDue, setDismissedDue] = useState([])
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 10
 
   useEffect(() => {
     if (!user?.id) return
@@ -310,6 +312,9 @@ export default function Expenses() {
   const months = [...new Set(expenses.map(e => e.date?.slice(0, 7)).filter(Boolean))].sort().reverse()
   const hasFilters = filterMonth || filterCategory || filterBank
 
+const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
   if (authLoading || !user) return null
   
   return (
@@ -396,17 +401,17 @@ export default function Expenses() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap mb-6">
-        <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
+        <select value={filterMonth} onChange={e => { setFilterMonth(e.target.value); setPage(0) }}
           className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
           <option value="">All months</option>
           {months.map(m => <option key={m} value={m}>{m}</option>)}
         </select>
-        <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)}
+        <select value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setPage(0) }}
           className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
           <option value="">All categories</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <select value={filterBank} onChange={e => setFilterBank(e.target.value)}
+        <select value={filterBank} onChange={e => { setFilterBank(e.target.value); setPage(0) }}
           className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
           <option value="">All banks</option>
           {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -424,6 +429,7 @@ export default function Expenses() {
         <div className="flex items-center justify-between bg-neutral-900 border border-neutral-800 rounded-xl px-5 py-3.5 mb-4">
           <span className="text-sm text-neutral-400">
             {filtered.length} expense{filtered.length !== 1 ? 's' : ''}{hasFilters ? ' (filtered)' : ''}
+            {totalPages > 1 && ` · page ${page + 1} of ${totalPages}`}
           </span>
           <span className="text-sm font-semibold text-white font-mono">₱{fmt(totalFiltered)}</span>
         </div>
@@ -443,7 +449,7 @@ export default function Expenses() {
             {expenses.length === 0 ? 'No expenses yet. Add your first one!' : 'No expenses match your filters.'}
           </div>
         ) : (
-          filtered.map(expense => (
+          paginated.map(expense => (
             <div key={expense.id} className="border-b border-neutral-800/50 last:border-0 hover:bg-neutral-800/30 transition-colors group">
               {/* Mobile card */}
               <div className="sm:hidden flex items-center gap-3 px-4 py-3.5">
@@ -507,6 +513,55 @@ export default function Expenses() {
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <button
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="flex items-center gap-2 text-sm text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed px-3 py-2 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+            Previous
+          </button>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i)
+              .filter(i => i === 0 || i === totalPages - 1 || Math.abs(i - page) <= 1)
+              .reduce((acc, i, idx, arr) => {
+                if (idx > 0 && i - arr[idx - 1] > 1) acc.push('...')
+                acc.push(i)
+                return acc
+              }, [])
+              .map((item, idx) =>
+                item === '...' ? (
+                  <span key={`e-${idx}`} className="text-neutral-600 text-sm px-1">…</span>
+                ) : (
+                  <button key={item} onClick={() => setPage(item)}
+                    className={`w-8 h-8 rounded-lg text-sm transition-colors ${
+                      page === item
+                        ? 'bg-emerald-500 text-neutral-950 font-semibold'
+                        : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+                    }`}>
+                    {item + 1}
+                  </button>
+                )
+              )}
+          </div>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+            disabled={page >= totalPages - 1}
+            className="flex items-center gap-2 text-sm text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed px-3 py-2 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-colors"
+          >
+            Next
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {showAdd && (
         <Modal title="Add Expense" onClose={() => setShowAdd(false)}>

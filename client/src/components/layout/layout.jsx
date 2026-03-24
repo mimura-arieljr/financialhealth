@@ -85,7 +85,7 @@ export default function Layout() {
         {/* Logo */}
         <div className="px-5 py-5 border-b border-neutral-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center">
               <img src="/diamond.svg" className="w-6 h-6" alt="" />
             </div>
             <span className="text-white font-semibold text-sm tracking-tight">Financial Health</span>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { ErrorBanner } from '../components/ui/errorBanner'
 
 const TABS = ['Banks', 'Credit Cards', 'Categories']
 
@@ -26,15 +27,6 @@ function TabBar({ active, onChange }) {
 
 function EmptyState({ message }) {
   return <div className="text-center py-12 text-neutral-600 text-sm">{message}</div>
-}
-
-function ErrorBanner({ message }) {
-  if (!message) return null
-  return (
-    <p className="text-red-400 text-xs bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2 mt-3">
-      {message}
-    </p>
-  )
 }
 
 function DeleteButton({ onClick, loading }) {

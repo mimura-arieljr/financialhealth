@@ -1,57 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { Modal } from '../components/ui/modal'
+import { fmt, today, isDueToday } from '../lib/utils'
+import { ErrorBanner } from '../components/ui/errorBanner'
+import { FieldInput } from '../components/ui/fieldInput'
+import { FieldSelect } from '../components/ui/fieldSelect'
 
-const fmt = (n) => Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })
-const today = () => new Date().toISOString().split('T')[0]
-
-function isDueToday(item) {
-  const now = new Date()
-  const todayDate = now.toISOString().split('T')[0]
-
-  // Already logged today
-  if (item.last_logged === todayDate) return false
-
-  if (item.frequency === 'monthly') {
-    return now.getDate() === item.day_of_month
-  }
-  if (item.frequency === 'weekly') {
-    return now.getDay() === item.day_of_week
-  }
-  return false
-}
-
-function ErrorBanner({ message }) {
-  if (!message) return null
-  return (
-    <p className="text-red-400 text-xs bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
-      {message}
-    </p>
-  )
-}
-
-function FieldSelect({ label, value, onChange, children, required }) {
-  return (
-    <div>
-      {label && <label className="block text-xs text-neutral-400 mb-1.5">{label}</label>}
-      <select value={value} onChange={e => onChange(e.target.value)} required={required}
-        className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors appearance-none">
-        {children}
-      </select>
-    </div>
-  )
-}
-
-function FieldInput({ label, type = 'text', value, onChange, placeholder, required, min, step }) {
-  return (
-    <div>
-      {label && <label className="block text-xs text-neutral-400 mb-1.5">{label}</label>}
-      <input type={type} value={value} onChange={e => onChange(e.target.value)}
-        placeholder={placeholder} required={required} min={min} step={step}
-        className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors" />
-    </div>
-  )
-}
 
 function CardStatusBadge({ creditCardId, isCardSettled }) {
   if (!creditCardId) return <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-400">Cash</span>
@@ -136,25 +91,6 @@ function ExpenseForm({ initialValues, banks, creditCards, categories, onSubmit, 
         </button>
       </div>
     </form>
-  )
-}
-
-function Modal({ title, onClose, children }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-white font-semibold">{title}</h2>
-          <button onClick={onClose} className="text-neutral-500 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
   )
 }
 

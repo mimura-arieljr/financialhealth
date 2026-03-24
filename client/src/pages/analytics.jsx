@@ -5,20 +5,7 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Cell, ReferenceLine, Legend
 } from 'recharts'
-
-const fmt = (n) => Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })
-const fmtShort = (n) => {
-  const num = Number(n)
-  if (num >= 1_000_000) return `₱${(num / 1_000_000).toFixed(1)}M`
-  if (num >= 1_000) return `₱${(num / 1_000).toFixed(1)}K`
-  return `₱${Math.round(num)}`
-}
-
-const COLORS = [
-  '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
-  '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1',
-  '#14b8a6', '#a855f7', '#e11d48', '#0ea5e9'
-]
+import { fmt, fmtShort, getLast12Months, getCurrentYear, getMonthsOfYear } from '../lib/utils'
 
 function SectionCard({ title, subtitle, children, loading }) {
   return (
@@ -46,33 +33,6 @@ function ChartTooltip({ active, payload, label }) {
       ))}
     </div>
   )
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-
-function getLast12Months() {
-  const now = new Date()
-  return Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1)
-    return {
-      key: d.toISOString().slice(0, 7),
-      label: d.toLocaleString('en-PH', { month: 'short', year: '2-digit' })
-    }
-  })
-}
-
-function getCurrentYear() {
-  return new Date().getFullYear()
-}
-
-function getMonthsOfYear(year) {
-  return Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(year, i, 1)
-    return {
-      key: d.toISOString().slice(0, 7),
-      label: d.toLocaleString('en-PH', { month: 'short' })
-    }
-  })
 }
 
 // ── Main Component ─────────────────────────────────────────────────────────
@@ -115,12 +75,12 @@ export default function Analytics() {
     : null
   const savingsRateColor = savingsRate === null ? 'text-neutral-500'
     : savingsRate >= 20 ? 'text-emerald-400'
-    : savingsRate >= 0 ? 'text-yellow-400'
-    : 'text-red-400'
+      : savingsRate >= 0 ? 'text-yellow-400'
+        : 'text-red-400'
   const savingsRateLabel = savingsRate === null ? 'No income data this month'
     : savingsRate >= 20 ? 'Healthy — above 20%'
-    : savingsRate >= 0 ? 'Below recommended 20%'
-    : 'Spending exceeds income'
+      : savingsRate >= 0 ? 'Below recommended 20%'
+        : 'Spending exceeds income'
 
   // ── 2. Monthly Net Worth Trend (last 12 months) ────────────────────────
   const last12 = getLast12Months()
@@ -167,7 +127,7 @@ export default function Analytics() {
 
   const projectedYearEnd = avgMonthlyNet !== null
     ? actualNets.slice(0, nowMonthIdx + 1).reduce((s, n) => s + n, 0) +
-      avgMonthlyNet * (11 - nowMonthIdx)
+    avgMonthlyNet * (11 - nowMonthIdx)
     : null
 
   // ── 4. Income Consistency (last 12 months) ────────────────────────────

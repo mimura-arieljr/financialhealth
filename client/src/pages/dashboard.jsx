@@ -2,23 +2,11 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, Legend
 } from 'recharts'
-
-const fmt = (n) => Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })
-const fmtShort = (n) => {
-  const num = Number(n)
-  if (num >= 1_000_000) return `₱${(num / 1_000_000).toFixed(1)}M`
-  if (num >= 1_000) return `₱${(num / 1_000).toFixed(1)}K`
-  return `₱${num.toFixed(0)}`
-}
-
-const CATEGORY_COLORS = [
-  '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
-  '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1',
-  '#14b8a6', '#a855f7', '#e11d48', '#0ea5e9'
-]
+import { fmt, fmtShort } from '../lib/utils'
+import { CATEGORY_COLORS } from '../lib/consts'
 
 // ── Stat Card ──────────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, valueColor = 'text-white', loading }) {

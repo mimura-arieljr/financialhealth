@@ -106,7 +106,7 @@ export default function Expenses() {
   const [deleting, setDeleting] = useState(null)
   const [filterCategory, setFilterCategory] = useState('')
   const [filterBank, setFilterBank] = useState('')
-  const [filterMonth, setFilterMonth] = useState('')
+  const [filterMonth, setFilterMonth] = useState(today().slice(0, 7))
   const [refreshKey, setRefreshKey] = useState(0)
   const [settlingCard, setSettlingCard] = useState(null)
   const [dueItems, setDueItems] = useState([])
@@ -248,11 +248,11 @@ export default function Expenses() {
   const months = [...new Set(expenses.map(e => e.date?.slice(0, 7)).filter(Boolean))].sort().reverse()
   const hasFilters = filterMonth || filterCategory || filterBank
 
-const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
   if (authLoading || !user) return null
-  
+
   return (
     <div className="p-4 sm:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
@@ -476,11 +476,10 @@ const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
                   <span key={`e-${idx}`} className="text-neutral-600 text-sm px-1">…</span>
                 ) : (
                   <button key={item} onClick={() => setPage(item)}
-                    className={`w-8 h-8 rounded-lg text-sm transition-colors ${
-                      page === item
-                        ? 'bg-emerald-500 text-neutral-950 font-semibold'
-                        : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
-                    }`}>
+                    className={`w-8 h-8 rounded-lg text-sm transition-colors ${page === item
+                      ? 'bg-emerald-500 text-neutral-950 font-semibold'
+                      : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+                      }`}>
                     {item + 1}
                   </button>
                 )

@@ -220,7 +220,7 @@ export default function Recurring() {
           {active.length > 0 && (
             <div>
               <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">
-                Active — {active.length} item{active.length !== 1 ? 's' : ''}
+                Active — {active.length} item{active.length !== 1 ? 's' : ''} — ₱{fmt(active.reduce((sum, i) => sum + i.amount, 0))} / mo
               </p>
               <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
                 {active.map((item, idx) => (

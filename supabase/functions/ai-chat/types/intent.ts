@@ -1,0 +1,1 @@
+export type Intent = "expenses" | "income" | "budget" | "general";

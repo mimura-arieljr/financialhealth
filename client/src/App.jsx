@@ -8,6 +8,7 @@ import Revenues from './pages/revenues'
 import Recurring from './pages/recurring'
 import Analytics from './pages/analytics'
 import Settings from './pages/settings'
+import AiChat from './pages/ai'
 import Transfers from './pages/transfers'
 
 function ProtectedRoute({ children }) {
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="transfers" element={<Transfers />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="ai" element={<AiChat />} />
         </Route>
       </Routes>
     </BrowserRouter>

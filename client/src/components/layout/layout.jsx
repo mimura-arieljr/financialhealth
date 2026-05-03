@@ -58,6 +58,15 @@ const navItems = [
     )
   },
   {
+    to: '/ai',
+    label: 'AI Chat',
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+      </svg>
+    )
+  },
+  {
     to: '/settings',
     label: 'Settings',
     icon: (
@@ -131,19 +140,22 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto pb-16 sm:pb-0">
+      <main className="flex-1 overflow-auto pb-20 sm:pb-0">
         <Outlet />
       </main>
 
       {/* Bottom nav — mobile only */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-neutral-900 border-t border-neutral-800 flex z-50">
+      <nav
+        className="sm:hidden fixed bottom-0 left-0 right-0 bg-neutral-900 border-t border-neutral-800 flex z-50 overflow-x-auto"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
         {navItems.map(item => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] leading-tight transition-colors [&>svg]:w-3.5 [&>svg]:h-3.5 ${
+              `min-w-[25vw] flex flex-col items-center gap-1 py-3 text-xs leading-tight transition-colors shrink-0 [&>svg]:w-5 [&>svg]:h-5 ${
                 isActive ? 'text-emerald-400' : 'text-neutral-500'
               }`
             }
@@ -154,7 +166,7 @@ export default function Layout() {
         ))}
         <button
           onClick={handleSignOut}
-          className="flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] leading-tight text-neutral-500 [&>svg]:w-3.5 [&>svg]:h-3.5"
+          className="min-w-[25vw] flex flex-col items-center gap-1 py-3 text-xs leading-tight text-neutral-500 shrink-0 [&>svg]:w-5 [&>svg]:h-5"
         >
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />

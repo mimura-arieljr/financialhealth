@@ -88,7 +88,7 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex flex-col sm:flex-row">
+    <div className="min-h-screen min-h-dvh bg-neutral-950 flex flex-col sm:flex-row">
       {/* Sidebar — desktop only */}
       <aside className="hidden sm:flex w-56 shrink-0 border-r border-neutral-800 flex-col">
         {/* Logo */}

@@ -90,7 +90,7 @@ export default function AiChat() {
   return (
     <div className="flex flex-col h-screen sm:h-[calc(100vh)] max-h-screen">
       {/* Header */}
-      <div className="px-6 py-5 border-neutral-800 shrink-0">
+      <div className="px-6 py-5 shrink-0 hidden md:block">
         <h1 className="text-2xl font-semibold text-white">AI Assistant</h1>
         <p className="text-neutral-500 text-sm mt-1">Ask anything about your finances.</p>
       </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import {
@@ -81,8 +81,13 @@ export default function Dashboard() {
   const [bankBalances, setBankBalances] = useState([])
   const [ccBalances, setCcBalances] = useState([])
   const [monthlyData, setMonthlyData] = useState([])
-  const [categoryData, setCategoryData] = useState([])
+  const [rawExpenses, setRawExpenses] = useState([])
+  const [rawCategories, setRawCategories] = useState([])
   const [totals, setTotals] = useState({ totalBalance: 0, totalDebt: 0, monthExpenses: 0, monthRevenue: 0 })
+
+  const now = new Date()
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const [categoryMonth, setCategoryMonth] = useState(currentMonthKey)
 
   useEffect(() => {
     if (!user?.id) return
@@ -152,21 +157,8 @@ export default function Dashboard() {
       })
       setMonthlyData(monthly)
 
-      // ── Category breakdown (current month) ────────────────────────────
-      const currentMonth = now.toISOString().slice(0, 7)
-      const catTotals = categories.map(cat => {
-        const total = expenses
-          .filter(e => e.category_id === cat.id && e.date?.slice(0, 7) === currentMonth)
-          .reduce((sum, e) => sum + Number(e.amount), 0)
-        return { name: cat.name, value: total }
-      }).filter(c => c.value > 0).sort((a, b) => b.value - a.value)
-
-      const grandTotal = catTotals.reduce((sum, c) => sum + c.value, 0)
-      const catWithPercent = catTotals.map(c => ({
-        ...c,
-        percent: grandTotal > 0 ? ((c.value / grandTotal) * 100).toFixed(1) : '0'
-      }))
-      setCategoryData(catWithPercent)
+      setRawExpenses(expenses)
+      setRawCategories(categories)
 
       // ── Summary totals ─────────────────────────────────────────────────
       const totalBalance = bankMap.reduce((sum, b) => sum + b.current_balance, 0)
@@ -174,10 +166,10 @@ export default function Dashboard() {
         .filter(e => e.credit_card_id !== null && e.is_card_settled === false)
         .reduce((sum, e) => sum + Number(e.amount), 0)
       const monthExpenses = expenses
-        .filter(e => e.date?.slice(0, 7) === currentMonth)
+        .filter(e => e.date?.slice(0, 7) === currentMonthKey)
         .reduce((sum, e) => sum + Number(e.amount), 0)
       const monthRevenue = revenues
-        .filter(r => r.date?.slice(0, 7) === currentMonth)
+        .filter(r => r.date?.slice(0, 7) === currentMonthKey)
         .reduce((sum, r) => sum + Number(r.amount), 0)
 
       setTotals({ totalBalance, totalDebt, monthExpenses, monthRevenue })
@@ -187,7 +179,30 @@ export default function Dashboard() {
     fetchAll()
   }, [user?.id])
 
-  const currentMonthLabel = new Date().toLocaleString('en-PH', { month: 'long', year: 'numeric' })
+  const categoryData = useMemo(() => {
+    const catTotals = rawCategories.map(cat => {
+      const total = rawExpenses
+        .filter(e => e.category_id === cat.id && e.date?.slice(0, 7) === categoryMonth)
+        .reduce((sum, e) => sum + Number(e.amount), 0)
+      return { name: cat.name, value: total }
+    }).filter(c => c.value > 0).sort((a, b) => b.value - a.value)
+    const grandTotal = catTotals.reduce((sum, c) => sum + c.value, 0)
+    return catTotals.map(c => ({
+      ...c,
+      percent: grandTotal > 0 ? ((c.value / grandTotal) * 100).toFixed(1) : '0'
+    }))
+  }, [rawExpenses, rawCategories, categoryMonth])
+
+  const categoryMonthLabel = new Date(categoryMonth + '-02').toLocaleString('en-PH', { month: 'long', year: 'numeric' })
+  const isCurrentMonth = categoryMonth === currentMonthKey
+
+  function shiftCategoryMonth(delta) {
+    const [y, m] = categoryMonth.split('-').map(Number)
+    const d = new Date(y, m - 1 + delta, 1)
+    setCategoryMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+  }
+
+  const currentMonthLabel = now.toLocaleString('en-PH', { month: 'long', year: 'numeric' })
   const netThisMonth = totals.monthRevenue - totals.monthExpenses
 
   if (authLoading || !user) return null
@@ -264,8 +279,12 @@ export default function Dashboard() {
 
         {/* Category pie — 1/3 width */}
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
-          <h2 className="text-sm font-medium text-white mb-4">Spending by Category</h2>
-          <p className="text-xs text-neutral-500 -mt-2 mb-3">Current month</p>
+          <h2 className="text-sm font-medium text-white mb-2">Spending by Category</h2>
+          <div className="flex items-center justify-between -mt-1 mb-3">
+            <button onClick={() => shiftCategoryMonth(-1)} className="text-neutral-500 hover:text-white transition-colors px-1">‹</button>
+            <p className="text-xs text-neutral-400">{categoryMonthLabel}</p>
+            <button onClick={() => shiftCategoryMonth(1)} disabled={isCurrentMonth} className="text-neutral-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors px-1">›</button>
+          </div>
           {loading ? (
             <div className="h-52 flex items-center justify-center text-neutral-600 text-sm">Loading...</div>
           ) : categoryData.length === 0 ? (

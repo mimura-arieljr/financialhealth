@@ -310,7 +310,7 @@ export default function Dashboard() {
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ background: CATEGORY_COLORS[i % CATEGORY_COLORS.length] }} />
                       <span className="text-neutral-400 truncate">{cat.name}</span>
                     </div>
-                    <span className="text-neutral-300 font-mono ml-2 shrink-0">{cat.percent}%</span>
+                    <span className="text-neutral-300 font-mono ml-2 shrink-0">₱{fmt(cat.value)} <span className="text-neutral-500">({cat.percent}%)</span></span>
                   </div>
                 ))}
               </div>

@@ -83,7 +83,7 @@ export default function Dashboard() {
   const [monthlyData, setMonthlyData] = useState([])
   const [rawExpenses, setRawExpenses] = useState([])
   const [rawCategories, setRawCategories] = useState([])
-  const [totals, setTotals] = useState({ totalBalance: 0, totalDebt: 0, monthExpenses: 0, monthRevenue: 0 })
+  const [totals, setTotals] = useState({ totalBalance: 0, totalDebt: 0, monthExpenses: 0, monthRevenue: 0, markedExpenses: 0 })
 
   const now = new Date()
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -94,7 +94,7 @@ export default function Dashboard() {
     const fetchAll = async () => {
       const [banksRes, expensesRes, revenuesRes, ccsRes, categoriesRes, transfersRes] = await Promise.all([
         supabase.from('banks').select('id, name, initial_balance').eq('user_id', user.id),
-        supabase.from('expenses').select('amount, date, bank_id, credit_card_id, is_card_settled, category_id').eq('user_id', user.id),
+        supabase.from('expenses').select('amount, date, bank_id, credit_card_id, is_card_settled, category_id, is_marked').eq('user_id', user.id),
         supabase.from('revenues').select('amount, date, bank_id').eq('user_id', user.id),
         supabase.from('credit_cards').select('id, name').eq('user_id', user.id),
         supabase.from('categories').select('id, name').eq('user_id', user.id),
@@ -171,8 +171,11 @@ export default function Dashboard() {
       const monthRevenue = revenues
         .filter(r => r.date?.slice(0, 7) === currentMonthKey)
         .reduce((sum, r) => sum + Number(r.amount), 0)
+      const markedExpenses = expenses
+        .filter(e => e.date?.slice(0, 7) === currentMonthKey && e.is_marked)
+        .reduce((sum, e) => sum + Number(e.amount), 0)
 
-      setTotals({ totalBalance, totalDebt, monthExpenses, monthRevenue })
+      setTotals({ totalBalance, totalDebt, monthExpenses, monthRevenue, markedExpenses })
       setLoading(false)
     }
 
@@ -320,7 +323,7 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Bank balances */}
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <h2 className="text-sm font-medium text-white mb-4">Bank Balances</h2>
@@ -337,6 +340,40 @@ export default function Dashboard() {
               {bankBalances.map(bank => (
                 <BankCard key={bank.id} bank={bank} loading={loading} />
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Marked spending */}
+        <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
+          <h2 className="text-sm font-medium text-white mb-1">Marked Expenses</h2>
+          <p className="text-xs text-neutral-500 mb-4">Current month</p>
+          {loading ? (
+            <div className="space-y-3">
+              <div className="h-5 w-32 bg-neutral-800 rounded animate-pulse" />
+              <div className="h-2 bg-neutral-800 rounded animate-pulse" />
+            </div>
+          ) : totals.monthExpenses === 0 ? (
+            <p className="text-neutral-600 text-sm text-center py-8">No expenses this month</p>
+          ) : (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs text-neutral-400">Marked</span>
+                <span className="text-sm font-mono text-violet-400">₱{fmt(totals.markedExpenses)}</span>
+              </div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs text-neutral-400">Other</span>
+                <span className="text-sm font-mono text-white">₱{fmt(totals.monthExpenses - totals.markedExpenses)}</span>
+              </div>
+              <div className="w-full h-2 bg-neutral-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-violet-500 rounded-full transition-all"
+                  style={{ width: `${((totals.markedExpenses / totals.monthExpenses) * 100).toFixed(1)}%` }}
+                />
+              </div>
+              <p className="text-xs text-neutral-500 mt-1.5 text-right">
+                {((totals.markedExpenses / totals.monthExpenses) * 100).toFixed(1)}% marked
+              </p>
             </div>
           )}
         </div>

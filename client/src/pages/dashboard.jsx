@@ -83,11 +83,12 @@ export default function Dashboard() {
   const [monthlyData, setMonthlyData] = useState([])
   const [rawExpenses, setRawExpenses] = useState([])
   const [rawCategories, setRawCategories] = useState([])
-  const [totals, setTotals] = useState({ totalBalance: 0, totalDebt: 0, monthExpenses: 0, monthRevenue: 0, markedExpenses: 0 })
+  const [totals, setTotals] = useState({ totalBalance: 0, totalDebt: 0, monthExpenses: 0, monthRevenue: 0 })
 
   const now = new Date()
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const [categoryMonth, setCategoryMonth] = useState(currentMonthKey)
+  const [markedMonth, setMarkedMonth] = useState(currentMonthKey)
 
   useEffect(() => {
     if (!user?.id) return
@@ -171,16 +172,12 @@ export default function Dashboard() {
       const monthRevenue = revenues
         .filter(r => r.date?.slice(0, 7) === currentMonthKey)
         .reduce((sum, r) => sum + Number(r.amount), 0)
-      const markedExpenses = expenses
-        .filter(e => e.date?.slice(0, 7) === currentMonthKey && e.is_marked)
-        .reduce((sum, e) => sum + Number(e.amount), 0)
-
-      setTotals({ totalBalance, totalDebt, monthExpenses, monthRevenue, markedExpenses })
+      setTotals({ totalBalance, totalDebt, monthExpenses, monthRevenue })
       setLoading(false)
     }
 
     fetchAll()
-  }, [user?.id])
+  }, [user?.id, currentMonthKey])
 
   const categoryData = useMemo(() => {
     const catTotals = rawCategories.map(cat => {
@@ -198,6 +195,25 @@ export default function Dashboard() {
 
   const categoryMonthLabel = new Date(categoryMonth + '-02').toLocaleString('en-PH', { month: 'long', year: 'numeric' })
   const isCurrentMonth = categoryMonth === currentMonthKey
+
+  const markedData = useMemo(() => {
+    const marked = rawExpenses
+      .filter(e => e.date?.slice(0, 7) === markedMonth && e.is_marked)
+      .reduce((sum, e) => sum + Number(e.amount), 0)
+    const total = rawExpenses
+      .filter(e => e.date?.slice(0, 7) === markedMonth)
+      .reduce((sum, e) => sum + Number(e.amount), 0)
+    return { marked, total }
+  }, [rawExpenses, markedMonth])
+
+  const markedMonthLabel = new Date(markedMonth + '-02').toLocaleString('en-PH', { month: 'long', year: 'numeric' })
+  const isMarkedCurrentMonth = markedMonth === currentMonthKey
+
+  function shiftMarkedMonth(delta) {
+    const [y, m] = markedMonth.split('-').map(Number)
+    const d = new Date(y, m - 1 + delta, 1)
+    setMarkedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+  }
 
   function shiftCategoryMonth(delta) {
     const [y, m] = categoryMonth.split('-').map(Number)
@@ -323,7 +339,7 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bank balances */}
         <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <h2 className="text-sm font-medium text-white mb-4">Bank Balances</h2>
@@ -344,42 +360,45 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Marked spending */}
-        <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
-          <h2 className="text-sm font-medium text-white mb-1">Marked Expenses</h2>
-          <p className="text-xs text-neutral-500 mb-4">Current month</p>
-          {loading ? (
-            <div className="space-y-3">
-              <div className="h-5 w-32 bg-neutral-800 rounded animate-pulse" />
+        {/* Right column */}
+        <div className="flex flex-col gap-4">
+          {/* Marked spending — compact */}
+          <div className="bg-neutral-900 border border-neutral-800 rounded-xl px-5 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-medium text-white">Marked Expenses</h2>
+              <div className="flex items-center gap-1">
+                <button onClick={() => shiftMarkedMonth(-1)} className="text-neutral-500 hover:text-white transition-colors px-1">‹</button>
+                <span className="text-xs text-neutral-400">{markedMonthLabel}</span>
+                <button onClick={() => shiftMarkedMonth(1)} disabled={isMarkedCurrentMonth} className="text-neutral-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors px-1">›</button>
+              </div>
+            </div>
+            {loading ? (
               <div className="h-2 bg-neutral-800 rounded animate-pulse" />
-            </div>
-          ) : totals.monthExpenses === 0 ? (
-            <p className="text-neutral-600 text-sm text-center py-8">No expenses this month</p>
-          ) : (
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs text-neutral-400">Marked</span>
-                <span className="text-sm font-mono text-violet-400">₱{fmt(totals.markedExpenses)}</span>
+            ) : markedData.total === 0 ? (
+              <p className="text-neutral-600 text-sm">No expenses this month</p>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-neutral-400">Marked</span>
+                    <span className="text-sm font-mono text-violet-400">₱{fmt(markedData.marked)}</span>
+                  </div>
+                  <span className="text-xs text-neutral-500">
+                    {((markedData.marked / markedData.total) * 100).toFixed(1)}%
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-violet-500 rounded-full transition-all"
+                    style={{ width: `${((markedData.marked / markedData.total) * 100).toFixed(1)}%` }}
+                  />
+                </div>
               </div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-neutral-400">Other</span>
-                <span className="text-sm font-mono text-white">₱{fmt(totals.monthExpenses - totals.markedExpenses)}</span>
-              </div>
-              <div className="w-full h-2 bg-neutral-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-violet-500 rounded-full transition-all"
-                  style={{ width: `${((totals.markedExpenses / totals.monthExpenses) * 100).toFixed(1)}%` }}
-                />
-              </div>
-              <p className="text-xs text-neutral-500 mt-1.5 text-right">
-                {((totals.markedExpenses / totals.monthExpenses) * 100).toFixed(1)}% marked
-              </p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Credit card debt */}
-        <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
+          {/* Credit card debt */}
+          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
           <h2 className="text-sm font-medium text-white mb-1">Outstanding Card Debt</h2>
           <p className="text-xs text-neutral-500 mb-4">Unsettled charges per card</p>
           {loading ? (
@@ -412,6 +431,7 @@ export default function Dashboard() {
               ))}
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

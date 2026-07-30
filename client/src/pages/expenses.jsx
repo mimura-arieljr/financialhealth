@@ -22,6 +22,7 @@ function ExpenseForm({ initialValues, banks, creditCards, categories, onSubmit, 
   const [bankId, setBankId] = useState(initialValues?.bank_id || '')
   const [creditCardId, setCreditCardId] = useState(initialValues?.credit_card_id || '')
   const [isCardSettled, setIsCardSettled] = useState(initialValues?.is_card_settled || false)
+  const [isMarked, setIsMarked] = useState(initialValues?.is_marked || false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -43,6 +44,7 @@ function ExpenseForm({ initialValues, banks, creditCards, categories, onSubmit, 
       bank_id: bankId,
       credit_card_id: creditCardId || null,
       is_card_settled: usedCard ? isCardSettled : null,
+      is_marked: isMarked,
     })
     if (err) setError(err)
     setSaving(false)
@@ -55,10 +57,23 @@ function ExpenseForm({ initialValues, banks, creditCards, categories, onSubmit, 
         <FieldInput label="Amount (₱)" type="number" value={amount} onChange={setAmount} placeholder="0.00" required min="0.01" step="0.01" />
         <FieldInput label="Date" type="date" value={date} onChange={setDate} required />
       </div>
-      <FieldSelect label="Category" value={categoryId} onChange={setCategoryId}>
-        <option value="">— Select category —</option>
-        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-      </FieldSelect>
+      <div className="grid grid-cols-[1fr_auto] gap-3 items-start">
+        <FieldSelect label="Category" value={categoryId} onChange={setCategoryId}>
+          <option value="">— Select category —</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </FieldSelect>
+        <label className="flex flex-col items-center gap-1.5 cursor-pointer">
+          <span className="text-xs text-neutral-400">Mark</span>
+          <input type="checkbox" checked={isMarked} onChange={e => setIsMarked(e.target.checked)} className="sr-only" />
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center border transition-colors ${isMarked ? 'bg-violet-500 border-violet-500' : 'bg-neutral-800 border-neutral-700'}`}>
+            {isMarked && (
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+        </label>
+      </div>
       <FieldSelect label="Financing Bank" value={bankId} onChange={setBankId} required>
         <option value="">— Select bank —</option>
         {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -107,6 +122,7 @@ export default function Expenses() {
   const [filterCategory, setFilterCategory] = useState('')
   const [filterBank, setFilterBank] = useState('')
   const [filterMonth, setFilterMonth] = useState(today().slice(0, 7))
+  const [filterMarked, setFilterMarked] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
   const [settlingCard, setSettlingCard] = useState(null)
   const [dueItems, setDueItems] = useState([])
@@ -135,7 +151,7 @@ export default function Expenses() {
     let cancelled = false
     supabase
       .from('expenses')
-      .select(`id, description, amount, date, is_card_settled, created_at,
+      .select(`id, description, amount, date, is_card_settled, is_marked, created_at,
         category_id, bank_id, credit_card_id,
         categories(id, name), banks(id, name), credit_cards(id, name)`)
       .eq('user_id', user.id)
@@ -241,12 +257,14 @@ export default function Expenses() {
     if (filterCategory && e.categories?.id !== filterCategory) return false
     if (filterBank && e.banks?.id !== filterBank) return false
     if (filterMonth && e.date?.slice(0, 7) !== filterMonth) return false
+    if (filterMarked === 'marked' && !e.is_marked) return false
+    if (filterMarked === 'unmarked' && e.is_marked) return false
     return true
   })
 
   const totalFiltered = filtered.reduce((sum, e) => sum + Number(e.amount), 0)
   const months = [...new Set(expenses.map(e => e.date?.slice(0, 7)).filter(Boolean))].sort().reverse()
-  const hasFilters = filterMonth || filterCategory || filterBank
+  const hasFilters = filterMonth || filterCategory || filterBank || filterMarked
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
@@ -352,8 +370,14 @@ export default function Expenses() {
           <option value="">All banks</option>
           {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
+        <select value={filterMarked} onChange={e => { setFilterMarked(e.target.value); setPage(0) }}
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
+          <option value="">All expenses</option>
+          <option value="marked">Marked only</option>
+          <option value="unmarked">Unmarked only</option>
+        </select>
         {hasFilters && (
-          <button onClick={() => { setFilterMonth(''); setFilterCategory(''); setFilterBank('') }}
+          <button onClick={() => { setFilterMonth(''); setFilterCategory(''); setFilterBank(''); setFilterMarked('') }}
             className="text-xs text-neutral-400 hover:text-white px-3 py-2 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-colors">
             Clear filters
           </button>
@@ -410,7 +434,8 @@ export default function Expenses() {
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-sm font-mono text-white">₱{fmt(expense.amount)}</p>
-                  <div className="mt-1">
+                  <div className="mt-1 flex items-center justify-end gap-1 flex-wrap">
+                    {expense.is_marked && <span className="text-xs px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400">Marked</span>}
                     <CardStatusBadge creditCardId={expense.credit_cards?.id} isCardSettled={expense.is_card_settled} />
                   </div>
                 </div>
@@ -429,6 +454,7 @@ export default function Expenses() {
                   {expense.banks?.name || <span className="text-neutral-600">—</span>}
                 </span>
                 <div className="flex items-center gap-2">
+                  {expense.is_marked && <span className="text-xs px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400">Marked</span>}
                   <CardStatusBadge creditCardId={expense.credit_cards?.id} isCardSettled={expense.is_card_settled} />
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={() => setEditingExpense(expense)} className="text-neutral-500 hover:text-white transition-colors p-1">

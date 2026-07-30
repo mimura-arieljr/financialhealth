@@ -1,6 +1,6 @@
 {
-  "name": "Financial Health",
-  "short_name": "FinancialHealth",
+  "name": "Fundora",
+  "short_name": "Fundora",
   "description": "Personal finance tracker",
   "start_url": "/",
   "display": "standalone",

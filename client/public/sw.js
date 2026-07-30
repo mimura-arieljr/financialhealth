@@ -1,4 +1,4 @@
-const CACHE_NAME = 'financial-health-v1'
+const CACHE_NAME = 'fundora-v1'
 
 // Assets to cache on install — Vite fingerprints filenames so
 // we only pre-cache the shell. Dynamic assets are cached at runtime.

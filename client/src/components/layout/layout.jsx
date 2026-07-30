@@ -97,7 +97,7 @@ export default function Layout() {
             <div className="w-7 h-7 rounded-lg flex items-center justify-center">
               <img src="/diamond.svg" className="w-6 h-6" alt="" />
             </div>
-            <span className="text-white font-semibold text-sm tracking-tight">Financial Health</span>
+            <span className="text-white font-semibold text-sm tracking-tight">Fundora</span>
           </div>
         </div>
 

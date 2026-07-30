@@ -1,4 +1,4 @@
-# Financial Health
+# Fundora
 
 A personal finance tracker for managing bank balances, expenses, revenues, and credit card debt — built for the Philippine Peso (₱).
 

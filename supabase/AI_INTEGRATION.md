@@ -1,4 +1,4 @@
-# AI Integration — Financial Health
+# AI Integration — Fundora
 
 This document covers how the AI assistant feature was set up and how it works under the hood.
 

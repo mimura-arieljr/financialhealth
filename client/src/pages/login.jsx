@@ -39,7 +39,7 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-12 h-12">
             <img src="/diamond.svg" className="w-10 h-10" alt="" />
           </div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight">Financial Health</h1>
+          <h1 className="text-2xl font-semibold text-white tracking-tight">Fundora</h1>
           <p className="text-neutral-500 text-sm mt-1">Personal finance, under control.</p>
         </div>
 

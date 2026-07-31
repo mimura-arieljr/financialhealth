@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { Modal } from '../components/ui/modal'
 import { fmt, today } from '../lib/utils'
@@ -99,7 +100,7 @@ export default function Transfers() {
 
   useEffect(() => {
     if (!user?.id) return
-    supabase.from('banks').select('id, name').eq('user_id', user.id).order('name')
+    fetchCached('banks', user.id, 'id, name', 'name')
       .then(({ data }) => { if (data) setBanks(data) })
   }, [user?.id])
 

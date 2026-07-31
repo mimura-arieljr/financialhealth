@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { fmt } from '../lib/utils'
 import { Modal } from '../components/ui/modal'
@@ -125,9 +126,9 @@ export default function Recurring() {
   useEffect(() => {
     if (!user?.id) return
     Promise.all([
-      supabase.from('banks').select('id, name').eq('user_id', user.id).order('name'),
-      supabase.from('credit_cards').select('id, name').eq('user_id', user.id).order('name'),
-      supabase.from('categories').select('id, name').eq('user_id', user.id).order('name'),
+      fetchCached('banks', user.id, 'id, name', 'name'),
+      fetchCached('credit_cards', user.id, 'id, name', 'name'),
+      fetchCached('categories', user.id, 'id, name', 'name'),
     ]).then(([b, cc, cat]) => {
       if (!b.error) setBanks(b.data)
       if (!cc.error) setCreditCards(cc.data)

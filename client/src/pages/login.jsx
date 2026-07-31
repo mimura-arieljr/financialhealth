@@ -36,8 +36,8 @@ export default function Login() {
       <div className="relative w-full max-w-sm">
         {/* Logo / Title */}
         <div className="mb-10 text-center">
-          <img src="/fundora_main.svg" className="h-12 w-auto mx-auto" alt="Fundora" />
-          <p className="text-neutral-500 text-sm mt-1">Personal finance, under control.</p>
+          <img src="/fundora_main.svg" className="h-20 w-auto mx-auto" alt="Fundora" />
+          <p className="text-neutral-500 text-base mt-1">Personal finance, under control.</p>
         </div>
 
         {/* Card */}

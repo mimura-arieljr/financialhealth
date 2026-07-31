@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { invalidateTable } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { ErrorBanner } from '../components/ui/errorBanner'
 
@@ -74,7 +75,7 @@ function BanksTab({ userId }) {
       user_id: userId, name: name.trim(), initial_balance: parseFloat(initialBalance) || 0
     })
     if (error) setError(error.message)
-    else { setName(''); setInitialBalance(''); setRefreshKey(k => k + 1) }
+    else { setName(''); setInitialBalance(''); setRefreshKey(k => k + 1); invalidateTable('banks', userId) }
     setAdding(false)
   }
 
@@ -82,7 +83,7 @@ function BanksTab({ userId }) {
     setDeleting(id)
     const { error } = await supabase.from('banks').delete().eq('id', id)
     if (error) setError(error.message)
-    else setRefreshKey(k => k + 1)
+    else { setRefreshKey(k => k + 1); invalidateTable('banks', userId) }
     setDeleting(null)
   }
 
@@ -160,7 +161,7 @@ function CreditCardsTab({ userId }) {
     setAdding(true)
     const { error } = await supabase.from('credit_cards').insert({ user_id: userId, name: name.trim() })
     if (error) setError(error.message)
-    else { setName(''); setRefreshKey(k => k + 1) }
+    else { setName(''); setRefreshKey(k => k + 1); invalidateTable('credit_cards', userId) }
     setAdding(false)
   }
 
@@ -168,7 +169,7 @@ function CreditCardsTab({ userId }) {
     setDeleting(id)
     const { error } = await supabase.from('credit_cards').delete().eq('id', id)
     if (error) setError(error.message)
-    else setRefreshKey(k => k + 1)
+    else { setRefreshKey(k => k + 1); invalidateTable('credit_cards', userId) }
     setDeleting(null)
   }
 
@@ -233,7 +234,7 @@ function CategoriesTab({ userId }) {
     setAdding(true)
     const { error } = await supabase.from('categories').insert({ user_id: userId, name: name.trim() })
     if (error) setError(error.message)
-    else { setName(''); setRefreshKey(k => k + 1) }
+    else { setName(''); setRefreshKey(k => k + 1); invalidateTable('categories', userId) }
     setAdding(false)
   }
 
@@ -241,7 +242,7 @@ function CategoriesTab({ userId }) {
     setDeleting(id)
     const { error } = await supabase.from('categories').delete().eq('id', id)
     if (error) setError(error.message)
-    else setRefreshKey(k => k + 1)
+    else { setRefreshKey(k => k + 1); invalidateTable('categories', userId) }
     setDeleting(null)
   }
 

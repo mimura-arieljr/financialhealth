@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
@@ -52,7 +53,7 @@ export default function Analytics() {
       const [expRes, revRes, bankRes] = await Promise.all([
         supabase.from('expenses').select('id, amount, date, category_id, bank_id, credit_card_id, is_card_settled').eq('user_id', user.id),
         supabase.from('revenues').select('id, amount, date, bank_id').eq('user_id', user.id),
-        supabase.from('banks').select('id, name, initial_balance').eq('user_id', user.id),
+        fetchCached('banks', user.id, 'id, name, initial_balance'),
       ])
       if (!expRes.error) setExpenses(expRes.data)
       if (!revRes.error) setRevenues(revRes.data)

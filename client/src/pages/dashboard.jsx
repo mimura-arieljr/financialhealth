@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import {
   AreaChart, Area, PieChart, Pie, Cell,
@@ -94,11 +95,11 @@ export default function Dashboard() {
     if (!user?.id) return
     const fetchAll = async () => {
       const [banksRes, expensesRes, revenuesRes, ccsRes, categoriesRes, transfersRes] = await Promise.all([
-        supabase.from('banks').select('id, name, initial_balance').eq('user_id', user.id),
+        fetchCached('banks', user.id, 'id, name, initial_balance'),
         supabase.from('expenses').select('amount, date, bank_id, credit_card_id, is_card_settled, category_id, is_marked').eq('user_id', user.id),
         supabase.from('revenues').select('amount, date, bank_id').eq('user_id', user.id),
-        supabase.from('credit_cards').select('id, name').eq('user_id', user.id),
-        supabase.from('categories').select('id, name').eq('user_id', user.id),
+        fetchCached('credit_cards', user.id, 'id, name'),
+        fetchCached('categories', user.id, 'id, name'),
         supabase.from('transfers').select('amount, date, from_bank_id, to_bank_id').eq('user_id', user.id),
       ])
 

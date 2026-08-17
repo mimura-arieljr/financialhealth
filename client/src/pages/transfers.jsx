@@ -63,7 +63,7 @@ function TransferForm({ initialValues, banks, onSubmit, onClose, submitLabel }) 
         {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
       </FieldSelect>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <FieldInput label="Amount (₱)" type="number" value={amount} onChange={setAmount}
           placeholder="0.00" required min="0.01" step="0.01" />
         <FieldInput label="Date" type="date" value={date} onChange={setDate} required />

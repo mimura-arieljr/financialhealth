@@ -38,7 +38,7 @@ function RevenueForm({ initialValues, banks, onSubmit, onClose, submitLabel }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <FieldInput label="Description" value={description} onChange={setDescription}
         placeholder="e.g. Salary NCS" required />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <FieldInput label="Amount (₱)" type="number" value={amount} onChange={setAmount}
           placeholder="0.00" required min="0.01" step="0.01" />
         <FieldInput label="Date" type="date" value={date} onChange={setDate} required />

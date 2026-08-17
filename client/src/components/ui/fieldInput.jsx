@@ -1,6 +1,6 @@
 export function FieldInput({ label, type = 'text', value, onChange, placeholder, required, min, max, step }) {
   return (
-    <div>
+    <div className="min-w-0">
       {label && <label className="block text-xs text-neutral-400 mb-1.5">{label}</label>}
       <input type={type} value={value} onChange={e => onChange(e.target.value)}
         placeholder={placeholder} required={required} min={min} max={max} step={step}

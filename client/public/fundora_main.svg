@@ -18,7 +18,6 @@
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
     </defs>
-<path d="M0 0 C463.32 0 926.64 0 1404 0 C1404 114.84 1404 229.68 1404 348 C940.68 348 477.36 348 0 348 C0 233.16 0 118.32 0 0 Z " fill="#040407" transform="translate(0,0)"/>
     <g id="brandmark" transform="translate(60, 24) scale(1.5)">
         <!-- Flat Shadow -->
         <ellipse cx="100" cy="175" rx="50" ry="8" fill="#000" fill-opacity="0.4" />

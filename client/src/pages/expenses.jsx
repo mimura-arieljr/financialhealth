@@ -54,10 +54,8 @@ function ExpenseForm({ initialValues, banks, creditCards, categories, onSubmit, 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <FieldInput label="Description" value={description} onChange={setDescription} placeholder="e.g. Starbucks" required />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <FieldInput label="Amount (₱)" type="number" value={amount} onChange={setAmount} placeholder="0.00" required min="0.01" step="0.01" />
-        <FieldInput label="Date" type="date" value={date} onChange={setDate} required />
-      </div>
+      <FieldInput label="Amount (₱)" type="number" value={amount} onChange={setAmount} placeholder="0.00" required min="0.01" step="0.01" />
+      <FieldInput label="Date" type="date" value={date} onChange={setDate} required />
       <div className="grid grid-cols-[1fr_auto] gap-3 items-start">
         <FieldSelect label="Category" value={categoryId} onChange={setCategoryId}>
           <option value="">— Select category —</option>

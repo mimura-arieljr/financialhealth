@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fundora - Wealth Management Logo Options</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --card-dark: #121824;
+            --text-light: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent-teal: #12a7a2;
+            --accent-mint: #17bba0;
+            --accent-blue: #4c75d5;
+            --accent-gold: #f59e0b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            max-width: 800px;
+        }
+
+        h1 {
+            font-size: 2.6rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .tagline {
+            display: inline-block;
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--accent-gold);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+            margin-bottom: 50px;
+        }
+
+        .card {
+            background-color: var(--card-dark);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(245, 158, 11, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-preview-box {
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #030406; /* Matches the app's header background */
+            position: relative;
+            height: 260px;
+        }
+
+        .logo-preview-box.light {
+            background-color: #ffffff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .theme-toggle-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: var(--text-light);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .logo-preview-box.light .theme-toggle-btn {
+            background-color: rgba(0, 0, 0, 0.06);
+            color: #1f2937;
+        }
+
+        .theme-toggle-btn:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .logo-preview-box.light .theme-toggle-btn:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .card-content {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .card h2 {
+            font-size: 1.4rem;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+        }
+
+        .card p {
+            font-size: 0.95rem;
+            margin: 0 0 20px 0;
+            flex-grow: 1;
+        }
+
+        /* Mockup area to show logo in header context */
+        .mockup-header {
+            margin-top: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            background-color: #030406;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .mockup-header.light {
+            background-color: #f9fafb;
+            color: #111827;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .mockup-brand {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            letter-spacing: -0.5px;
+        }
+
+        .mockup-logo-container {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mockup-logo-container svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-mint));
+            color: #030406;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            margin-top: 15px;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .action-btn:hover {
+            opacity: 0.95;
+            transform: scale(1.02);
+        }
+
+        .action-btn:active {
+            transform: scale(0.98);
+        }
+
+        .footer {
+            margin-top: 60px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .footer code {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: var(--accent-mint);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span class="tagline">Iterating: Option 3 for Wealth Management</span>
+        <h1>Refining "Fundora's Box" with Wealth Symbols</h1>
+        <p>
+            You liked the **Prism Trend Box**! We have redesigned the elements inside the wireframe box to focus directly on **wealth management, compound growth, security, and financial prosperity** instead of a simple bar-chart.
+        </p>
+    </header>
+
+    <div class="container">
+
+        <!-- VARIATION A: THE GOLDEN COIN STACKS -->
+        <div class="card">
+            <div class="logo-preview-box" id="preview-1">
+                <button class="theme-toggle-btn" onclick="toggleTheme(1)">Toggle Light/Dark</button>
+                <!-- SVG Option 3A -->
+                <svg width="180" height="180" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <!-- Gradients -->
+                        <linearGradient id="goldCoinSide" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#f59e0b" />
+                            <stop offset="100%" stop-color="#b45309" />
+                        </linearGradient>
+                        <linearGradient id="goldCoinTop" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fbbf24" />
+                            <stop offset="100%" stop-color="#f59e0b" />
+                        </linearGradient>
+                        <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#17bba0" />
+                            <stop offset="100%" stop-color="#4c75d5" />
+                        </linearGradient>
+                        <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="5" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                    </defs>
+
+                    <!-- Flat Shadow -->
+                    <ellipse cx="100" cy="175" rx="50" ry="8" fill="#000" fill-opacity="0.4" />
+
+                    <!-- Stacks of Wealth Coins rising up -->
+                    <!-- LEFT STACK (Height 3) -->
+                    <g transform="translate(68, 105)">
+                        <!-- Coin 1 (bottom) -->
+                        <path d="M0 18 L0 23 A15 6 0 0 0 30 23 L30 18 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="18" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                        <!-- Coin 2 -->
+                        <path d="M0 12 L0 17 A15 6 0 0 0 30 17 L30 12 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="12" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                        <!-- Coin 3 -->
+                        <path d="M0 6 L0 11 A15 6 0 0 0 30 11 L30 6 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="6" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                    </g>
+
+                    <!-- RIGHT STACK (Height 5) -->
+                    <g transform="translate(102, 85)">
+                        <!-- Coin 1 -->
+                        <path d="M0 24 L0 29 A15 6 0 0 0 30 29 L30 24 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="24" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                        <!-- Coin 2 -->
+                        <path d="M0 18 L0 23 A15 6 0 0 0 30 23 L30 18 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="18" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                        <!-- Coin 3 -->
+                        <path d="M0 12 L0 17 A15 6 0 0 0 30 17 L30 12 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="12" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                        <!-- Coin 4 -->
+                        <path d="M0 6 L0 11 A15 6 0 0 0 30 11 L30 6 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="6" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                        <!-- Coin 5 -->
+                        <path d="M0 0 L0 5 A15 6 0 0 0 30 5 L30 0 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="0" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                    </g>
+
+                    <!-- CENTER STACK (Height 7, Tallest) -->
+                    <g transform="translate(85, 65)">
+                        <!-- Coin 1 -->
+                        <path d="M0 36 L0 41 A15 6 0 0 0 30 41 L30 36 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="36" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                        <!-- Coin 2 -->
+                        <path d="M0 30 L0 35 A15 6 0 0 0 30 35 L30 30 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="30" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                        <!-- Coin 3 -->
+                        <path d="M0 24 L0 29 A15 6 0 0 0 30 29 L30 24 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="24" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                        <!-- Coin 4 -->
+                        <path d="M0 18 L0 23 A15 6 0 0 0 30 23 L30 18 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="18" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                        <!-- Coin 5 -->
+                        <path d="M0 12 L0 17 A15 6 0 0 0 30 17 L30 12 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="12" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                        <!-- Coin 6 -->
+                        <path d="M0 6 L0 11 A15 6 0 0 0 30 11 L30 6 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="6" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                        <!-- Coin 7 (Top) -->
+                        <path d="M0 0 L0 5 A15 6 0 0 0 30 5 L30 0 Z" fill="url(#goldCoinSide)" />
+                        <ellipse cx="15" cy="0" rx="15" ry="6" fill="url(#goldCoinTop)" />
+                    </g>
+
+                    <!-- Upward Golden Trend line swooping from back of coins -->
+                    <g filter="url(#glowFilter)">
+                        <path d="M60 125 C 80 110, 85 75, 115 50" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" fill="none" />
+                        <!-- Arrow head -->
+                        <path d="M110 50 L117 48 L116 55 Z" fill="#f59e0b" />
+                    </g>
+
+                    <!-- Wireframe Box (The open Pandora's Box) -->
+                    <!-- Back lines (inside) -->
+                    <path d="M60 120 L100 142 L140 120" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-linecap="round" />
+                    
+                    <!-- Front Walls of the Box (Semi-transparent) -->
+                    <path d="M60 120 L100 142 L100 170 L60 148 Z" fill="rgba(18, 167, 162, 0.08)" stroke="url(#lineGrad)" stroke-width="2" />
+                    <path d="M100 142 L140 120 L140 148 L100 170 Z" fill="rgba(8, 62, 165, 0.08)" stroke="url(#lineGrad)" stroke-width="2" />
+
+                    <!-- Stylized Floating Lid at side -->
+                    <g transform="translate(-18, 10) rotate(-25, 60, 110)">
+                        <path d="M30 110 L60 124 L90 110 L60 96 Z" fill="rgba(23, 187, 160, 0.15)" stroke="url(#lineGrad)" stroke-width="1.5" />
+                    </g>
+                    
+                    <!-- Golden Peso symbol printed on the front of the box -->
+                    <g transform="translate(94, 143) scale(0.6)">
+                        <path d="M8 4 C 13.5 4, 16 6.5, 16 10 C 16 13.5, 13.5 16, 8 16 L8 28 L4 28 L4 4 L8 4 Z M8 12 C 11.5 12, 12 11, 12 10 C 12 9, 11.5 8, 8 8 L8 12 Z" fill="url(#goldCoinTop)" />
+                        <rect x="1" y="8" width="13" height="2.5" fill="url(#goldCoinTop)" />
+                        <rect x="1" y="12" width="13" height="2.5" fill="url(#goldCoinTop)" />
+                    </g>
+                </svg>
+            </div>
+            <div class="card-content">
+                <h2>3A. The Coin Stacks</h2>
+                <p>Features stacks of glossy 3D gold coins rising up inside the wireframe box. An elegant, glowing golden trend-line sweeps upwards, representing systematic compound savings and wealth growth. Direct representation of wealth management.</p>
+                
+                <div class="mockup-header" id="mockup-header-1">
+                    <div class="mockup-brand">
+                        <div class="mockup-logo-container">
+                            <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <ellipse cx="100" cy="175" rx="50" ry="8" fill="#000" fill-opacity="0.4" />
+                                <ellipse cx="80" cy="110" rx="14" ry="5" fill="#f59e0b" />
+                                <ellipse cx="120" cy="95" rx="14" ry="5" fill="#f59e0b" />
+                                <ellipse cx="100" cy="80" rx="14" ry="5" fill="#fbbf24" />
+                                <path d="M60 120 L100 142 L140 120 L100 170 Z" fill="none" stroke="#17bba0" stroke-width="4" />
+                            </svg>
+                        </div>
+                        Fundora
+                    </div>
+                </div>
+
+                <button class="action-btn" onclick="selectLogo('3A')">Select Coin Stacks</button>
+            </div>
+        </div>
+
+        <!-- VARIATION B: THE GROWTH SPROUT -->
+        <div class="card">
+            <div class="logo-preview-box" id="preview-2">
+                <button class="theme-toggle-btn" onclick="toggleTheme(2)">Toggle Light/Dark</button>
+                <!-- SVG Option 3B -->
+                <svg width="180" height="180" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#17bba0" />
+                            <stop offset="100%" stop-color="#4c75d5" />
+                        </linearGradient>
+                        <linearGradient id="plantStem" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stop-color="#12a7a2" />
+                            <stop offset="100%" stop-color="#17bba0" />
+                        </linearGradient>
+                        <linearGradient id="goldCoin" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fbbf24" />
+                            <stop offset="100%" stop-color="#d97706" />
+                        </linearGradient>
+                        <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="4" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                    </defs>
+
+                    <!-- Flat Shadow -->
+                    <ellipse cx="100" cy="175" rx="50" ry="8" fill="#000" fill-opacity="0.4" />
+
+                    <!-- Growing Sprout with Gold Coin leaves -->
+                    <!-- Stem -->
+                    <path d="M100 135 Q100 85, 115 50 Q118 43, 110 38 Q103 45, 102 55" stroke="url(#plantStem)" stroke-width="5" stroke-linecap="round" fill="none" />
+                    
+                    <!-- Coin Leaves -->
+                    <!-- Leaf 1 (Left - Gold Coin) -->
+                    <g transform="translate(73, 75) rotate(-25)">
+                        <ellipse cx="15" cy="15" rx="15" ry="11" fill="url(#goldCoin)" filter="url(#glowFilter)" />
+                        <ellipse cx="15" cy="15" rx="10" ry="7" fill="none" stroke="#b45309" stroke-width="1.5" />
+                    </g>
+                    <!-- Leaf 2 (Right - Gold Coin) -->
+                    <g transform="translate(108, 62) rotate(25)">
+                        <ellipse cx="15" cy="15" rx="15" ry="11" fill="url(#goldCoin)" filter="url(#glowFilter)" />
+                        <ellipse cx="15" cy="15" rx="10" ry="7" fill="none" stroke="#b45309" stroke-width="1.5" />
+                    </g>
+                    <!-- Leaf 3 (Top - Golden Peso Coin) -->
+                    <g transform="translate(93, 22)">
+                        <ellipse cx="15" cy="11" rx="15" ry="11" fill="url(#goldCoin)" filter="url(#glowFilter)" />
+                        <ellipse cx="15" cy="11" rx="11" ry="8" fill="none" stroke="#b45309" stroke-width="1.2" />
+                        <!-- Tiny Peso symbol on top leaf -->
+                        <g transform="translate(11, 4) scale(0.45)">
+                            <path d="M8 4 C 13.5 4, 16 6.5, 16 10 C 16 13.5, 13.5 16, 8 16 L8 28 L4 28 L4 4 L8 4 Z" fill="#b45309" />
+                            <rect x="1" y="8" width="13" height="3" fill="#b45309" />
+                        </g>
+                    </g>
+
+                    <!-- Wireframe Box -->
+                    <!-- Back lines (inside) -->
+                    <path d="M60 120 L100 142 L140 120" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-linecap="round" />
+                    
+                    <!-- Front Walls of the Box -->
+                    <path d="M60 120 L100 142 L100 170 L60 148 Z" fill="rgba(18, 167, 162, 0.08)" stroke="url(#lineGrad)" stroke-width="2" />
+                    <path d="M100 142 L140 120 L140 148 L100 170 Z" fill="rgba(8, 62, 165, 0.08)" stroke="url(#lineGrad)" stroke-width="2" />
+
+                    <!-- Stylized Floating Lid at side -->
+                    <g transform="translate(-18, 10) rotate(-25, 60, 110)">
+                        <path d="M30 110 L60 124 L90 110 L60 96 Z" fill="rgba(23, 187, 160, 0.15)" stroke="url(#lineGrad)" stroke-width="1.5" />
+                    </g>
+                </svg>
+            </div>
+            <div class="card-content">
+                <h2>3B. The Growth Sprout</h2>
+                <p>Features a stylized sprout branching upwards out of the wireframe box. The leaves are beautifully detailed gold coins, with the crowning top coin featuring the Peso (₱) symbol. Symbolizes "growing your money" and compound interest/wealth growth.</p>
+                
+                <div class="mockup-header" id="mockup-header-2">
+                    <div class="mockup-brand">
+                        <div class="mockup-logo-container">
+                            <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <ellipse cx="100" cy="175" rx="50" ry="8" fill="#000" fill-opacity="0.4" />
+                                <path d="M100 135 Q100 85, 110 50" stroke="#17bba0" stroke-width="4" fill="none" />
+                                <circle cx="85" cy="80" r="10" fill="#f59e0b" />
+                                <circle cx="115" cy="70" r="10" fill="#f59e0b" />
+                                <circle cx="105" cy="45" r="10" fill="#fbbf24" />
+                                <path d="M60 120 L100 142 L140 120 L100 170 Z" fill="none" stroke="#17bba0" stroke-width="4" />
+                            </svg>
+                        </div>
+                        Fundora
+                    </div>
+                </div>
+
+                <button class="action-btn" onclick="selectLogo('3B')">Select Growth Sprout</button>
+            </div>
+        </div>
+
+        <!-- VARIATION C: THE WEALTH KEY & SHIELD -->
+        <div class="card">
+            <div class="logo-preview-box" id="preview-3">
+                <button class="theme-toggle-btn" onclick="toggleTheme(3)">Toggle Light/Dark</button>
+                <!-- SVG Option 3C -->
+                <svg width="180" height="180" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#17bba0" />
+                            <stop offset="100%" stop-color="#4c75d5" />
+                        </linearGradient>
+                        <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#12a7a2" />
+                            <stop offset="100%" stop-color="#083ea5" />
+                        </linearGradient>
+                        <linearGradient id="goldCoin" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fbbf24" />
+                            <stop offset="100%" stop-color="#d97706" />
+                        </linearGradient>
+                        <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="5" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                    </defs>
+
+                    <!-- Flat Shadow -->
+                    <ellipse cx="100" cy="175" rx="50" ry="8" fill="#000" fill-opacity="0.4" />
+
+                    <!-- Glowing Shield & Key (Security and Management) -->
+                    <g filter="url(#glowFilter)">
+                        <!-- Shield Background -->
+                        <path d="M100 45 C118 45, 128 50, 128 72 C128 95, 109 110, 100 115 C91 110, 72 95, 72 72 C72 50, 82 45, 100 45 Z" fill="url(#shieldGrad)" stroke="#17bba0" stroke-width="2" />
+                        
+                        <!-- Glowing Gold Key overlaid -->
+                        <!-- Key Head (Double Ring / Coin) -->
+                        <circle cx="100" cy="62" r="10" fill="none" stroke="url(#goldCoin)" stroke-width="3" />
+                        <!-- Key Stem -->
+                        <rect x="98.5" y="72" width="3" height="32" fill="url(#goldCoin)" />
+                        <!-- Key Teeth forming a stylized 'F' and Peso bar -->
+                        <rect x="101.5" y="80" width="8" height="3" fill="url(#goldCoin)" />
+                        <rect x="101.5" y="88" width="6" height="3" fill="url(#goldCoin)" />
+                    </g>
+
+                    <!-- Wireframe Box -->
+                    <!-- Back lines (inside) -->
+                    <path d="M60 120 L100 142 L140 120" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-linecap="round" />
+                    
+                    <!-- Front Walls of the Box -->
+                    <path d="M60 120 L100 142 L100 170 L60 148 Z" fill="rgba(18, 167, 162, 0.08)" stroke="url(#lineGrad)" stroke-width="2" />
+                    <path d="M100 142 L140 120 L140 148 L100 170 Z" fill="rgba(8, 62, 165, 0.08)" stroke="url(#lineGrad)" stroke-width="2" />
+
+                    <!-- Stylized Floating Lid at side -->
+                    <g transform="translate(-18, 10) rotate(-25, 60, 110)">
+                        <path d="M30 110 L60 124 L90 110 L60 96 Z" fill="rgba(23, 187, 160, 0.15)" stroke="url(#lineGrad)" stroke-width="1.5" />
+                    </g>
+                </svg>
+            </div>
+            <div class="card-content">
+                <h2>3C. The Key & Shield</h2>
+                <p>Combines a sleek geometric security shield with a detailed golden key rising out of the wireframe box. The teeth of the key are custom-shaped to form the letter **"F"**. Represents wealth protection, security, and asset management.</p>
+                
+                <div class="mockup-header" id="mockup-header-3">
+                    <div class="mockup-brand">
+                        <div class="mockup-logo-container">
+                            <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <ellipse cx="100" cy="175" rx="50" ry="8" fill="#000" fill-opacity="0.4" />
+                                <path d="M100 45 C118 45, 128 50, 128 72 C128 95, 100 115 C72 95, 72 72, 100 45 Z" fill="#083ea5" stroke="#17bba0" stroke-width="2" />
+                                <circle cx="100" cy="62" r="10" fill="none" stroke="#f59e0b" stroke-width="3" />
+                                <rect x="98.5" y="72" width="3" height="32" fill="#f59e0b" />
+                                <path d="M60 120 L100 142 L140 120 L100 170 Z" fill="none" stroke="#17bba0" stroke-width="4" />
+                            </svg>
+                        </div>
+                        Fundora
+                    </div>
+                </div>
+
+                <button class="action-btn" onclick="selectLogo('3C')">Select Key & Shield</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        To review these live in full quality, open this HTML file directly in any browser: <br>
+        <code>/Users/chockmimura/Github/financialhealth/client/public/logo-preview.html</code>
+    </div>
+
+    <script>
+        function toggleTheme(index) {
+            const previewBox = document.getElementById(`preview-${index}`);
+            const mockupBox = document.getElementById(`mockup-header-${index}`);
+            
+            previewBox.classList.toggle('light');
+            mockupBox.classList.toggle('light');
+        }
+
+        function selectLogo(variant) {
+            alert(`You selected Design ${variant}! Please tell Gemini CLI in the chat which option you want, and it will replace the fundora_logo.svg for you.`);
+        }
+    </script>
+</body>
+</html>

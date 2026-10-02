@@ -7,7 +7,7 @@ const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`
 function UserMessage({ text }) {
   return (
     <div className="flex justify-end">
-      <div className="bg-emerald-500 text-neutral-950 text-sm rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[80%]">
+      <div className="bg-accent-500 text-neutral-950 text-sm rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[80%]">
         {text}
       </div>
     </div>
@@ -136,12 +136,12 @@ export default function AiChat() {
             onChange={e => setInput(e.target.value)}
             placeholder="Ask about your finances..."
             disabled={loading}
-            className="flex-1 bg-neutral-900 border border-neutral-800 text-white text-sm rounded-xl px-4 py-3 placeholder-neutral-600 focus:outline-none focus:border-emerald-500 disabled:opacity-50 transition-colors"
+            className="flex-1 bg-neutral-900 border border-neutral-800 text-white text-sm rounded-xl px-4 py-3 placeholder-neutral-600 focus:outline-none focus:border-accent-500 disabled:opacity-50 transition-colors"
           />
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-neutral-950 rounded-xl px-4 transition-colors"
+            className="bg-accent-500 hover:bg-accent-400 disabled:opacity-40 text-neutral-950 rounded-xl px-4 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />

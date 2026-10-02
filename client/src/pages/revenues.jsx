@@ -52,7 +52,7 @@ function RevenueForm({ initialValues, banks, onSubmit, onClose, submitLabel }) {
           Cancel
         </button>
         <button type="submit" disabled={saving}
-          className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-neutral-950 text-sm font-semibold rounded-lg py-2.5 transition-colors">
+          className="flex-1 bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 text-sm font-semibold rounded-lg py-2.5 transition-colors">
           {saving ? 'Saving...' : submitLabel}
         </button>
       </div>
@@ -139,7 +139,7 @@ export default function Revenues() {
           <p className="text-neutral-500 text-sm mt-1">Track your income and transfers.</p>
         </div>
         <button onClick={() => setShowAdd(true)}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors">
+          className="flex items-center justify-center gap-2 w-full sm:w-auto bg-accent-500 hover:bg-accent-400 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
@@ -150,12 +150,12 @@ export default function Revenues() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap mb-6">
         <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors">
           <option value="">All months</option>
           {months.map(m => <option key={m} value={m}>{m}</option>)}
         </select>
         <select value={filterBank} onChange={e => setFilterBank(e.target.value)}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors">
           <option value="">All banks</option>
           {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>

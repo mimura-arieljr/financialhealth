@@ -95,16 +95,16 @@ function BanksTab({ userId }) {
           <div className="flex-1 min-w-36">
             <label className="block text-xs text-neutral-400 mb-1.5">Bank Name</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. BPI"
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors" />
+              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/50 transition-colors" />
           </div>
           <div className="flex-1 min-w-36">
             <label className="block text-xs text-neutral-400 mb-1.5">Initial Balance (₱)</label>
             <input type="number" value={initialBalance} onChange={e => setInitialBalance(e.target.value)}
               placeholder="0.00" min="0" step="0.01"
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors" />
+              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/50 transition-colors" />
           </div>
           <button type="submit" disabled={adding}
-            className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2 transition-colors">
+            className="w-full sm:w-auto bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2 transition-colors">
             {adding ? 'Adding...' : 'Add'}
           </button>
         </form>
@@ -181,10 +181,10 @@ function CreditCardsTab({ userId }) {
           <div className="flex-1">
             <label className="block text-xs text-neutral-400 mb-1.5">Card / Issuer Name</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Metrobank"
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors" />
+              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/50 transition-colors" />
           </div>
           <button type="submit" disabled={adding}
-            className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2 transition-colors">
+            className="w-full sm:w-auto bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2 transition-colors">
             {adding ? 'Adding...' : 'Add'}
           </button>
         </form>
@@ -254,10 +254,10 @@ function CategoriesTab({ userId }) {
           <div className="flex-1">
             <label className="block text-xs text-neutral-400 mb-1.5">Category Name</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Travel"
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors" />
+              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/50 transition-colors" />
           </div>
           <button type="submit" disabled={adding}
-            className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2 transition-colors">
+            className="w-full sm:w-auto bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2 transition-colors">
             {adding ? 'Adding...' : 'Add'}
           </button>
         </form>

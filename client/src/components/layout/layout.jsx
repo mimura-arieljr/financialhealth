@@ -111,7 +111,7 @@ export default function Layout() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                   isActive
-                    ? 'bg-emerald-500/10 text-emerald-400'
+                    ? 'bg-accent-500/10 text-accent-400'
                     : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
                 }`
               }
@@ -156,7 +156,7 @@ export default function Layout() {
             end={item.end}
             className={({ isActive }) =>
               `min-w-[25vw] flex flex-col items-center gap-1 py-3 text-xs leading-tight transition-colors shrink-0 [&>svg]:w-5 [&>svg]:h-5 ${
-                isActive ? 'text-emerald-400' : 'text-neutral-500'
+                isActive ? 'text-accent-400' : 'text-neutral-500'
               }`
             }
           >

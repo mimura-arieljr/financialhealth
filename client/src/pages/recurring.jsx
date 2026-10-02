@@ -93,7 +93,7 @@ function RecurringForm({ initialValues, banks, creditCards, categories, onSubmit
           Cancel
         </button>
         <button type="submit" disabled={saving}
-          className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-neutral-950 text-sm font-semibold rounded-lg py-2.5 transition-colors">
+          className="flex-1 bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 text-sm font-semibold rounded-lg py-2.5 transition-colors">
           {saving ? 'Saving...' : submitLabel}
         </button>
       </div>
@@ -201,7 +201,7 @@ export default function Recurring() {
           <p className="text-neutral-500 text-sm mt-1">Manage your scheduled expenses.</p>
         </div>
         <button onClick={() => setShowAdd(true)}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors">
+          className="flex items-center justify-center gap-2 w-full sm:w-auto bg-accent-500 hover:bg-accent-400 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
@@ -282,7 +282,7 @@ function RecurringRow({ item, isLast, onEdit, onDelete, onToggle, deleting, togg
     <div className={`flex items-center gap-4 px-5 py-4 group hover:bg-neutral-800/30 transition-colors ${!isLast ? 'border-b border-neutral-800/50' : ''}`}>
       {/* Toggle active */}
       <button onClick={onToggle} disabled={toggling}
-        className={`relative inline-flex w-8 h-4.5 rounded-full transition-colors shrink-0 disabled:opacity-30 ${item.is_active ? 'bg-emerald-500' : 'bg-neutral-600'}`}>
+        className={`relative inline-flex w-8 h-4.5 rounded-full transition-colors shrink-0 disabled:opacity-30 ${item.is_active ? 'bg-accent-500' : 'bg-neutral-600'}`}>
         <span className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full bg-white transition-transform ${item.is_active ? 'translate-x-3.5' : ''}`} />
       </button>
 

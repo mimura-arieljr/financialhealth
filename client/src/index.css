@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Brand accent; change here to re-theme */
+@theme {
+  --color-accent-300: #99ffff;
+  --color-accent-400: #66ffff;
+  --color-accent-500: #00ffff;
+}
+
 html,
 body {
   background-color: #0a0a0a;

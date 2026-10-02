@@ -11,7 +11,7 @@ import { FieldSelect } from '../components/ui/fieldSelect'
 
 function CardStatusBadge({ creditCardId, isCardSettled }) {
   if (!creditCardId) return <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-400">Cash</span>
-  if (isCardSettled) return <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">Settled</span>
+  if (isCardSettled) return <span className="text-xs px-2 py-0.5 rounded-full bg-accent-500/10 text-accent-400">Settled</span>
   return <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400">Unpaid</span>
 }
 
@@ -88,7 +88,7 @@ function ExpenseForm({ initialValues, banks, creditCards, categories, onSubmit, 
             <p className="text-xs text-neutral-500 mt-0.5">Toggle on if you've already paid this card bill</p>
           </div>
           <button type="button" onClick={() => setIsCardSettled(v => !v)}
-            className={`relative inline-flex w-10 h-6 rounded-full transition-colors shrink-0 ${isCardSettled ? 'bg-emerald-500' : 'bg-neutral-600'}`}>
+            className={`relative inline-flex w-10 h-6 rounded-full transition-colors shrink-0 ${isCardSettled ? 'bg-accent-500' : 'bg-neutral-600'}`}>
             <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${isCardSettled ? 'translate-x-4' : ''}`} />
           </button>
         </div>
@@ -100,7 +100,7 @@ function ExpenseForm({ initialValues, banks, creditCards, categories, onSubmit, 
           Cancel
         </button>
         <button type="submit" disabled={saving}
-          className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-neutral-950 text-sm font-semibold rounded-lg py-2.5 transition-colors">
+          className="flex-1 bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 text-sm font-semibold rounded-lg py-2.5 transition-colors">
           {saving ? 'Saving...' : submitLabel}
         </button>
       </div>
@@ -278,7 +278,7 @@ export default function Expenses() {
           <p className="text-neutral-500 text-sm mt-1">Track and manage your spending.</p>
         </div>
         <button onClick={() => setShowAdd(true)}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors">
+          className="flex items-center justify-center gap-2 w-full sm:w-auto bg-accent-500 hover:bg-accent-400 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
@@ -294,7 +294,7 @@ export default function Expenses() {
             {dueItems
               .filter(i => !dismissedDue.includes(i.id))
               .map(item => (
-                <div key={item.id} className="bg-neutral-900 border border-emerald-500/20 rounded-xl px-4 py-3.5 flex items-center justify-between gap-4">
+                <div key={item.id} className="bg-neutral-900 border border-accent-500/20 rounded-xl px-4 py-3.5 flex items-center justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-sm text-white font-medium truncate">{item.description}</p>
                     <p className="text-xs text-neutral-500 mt-0.5 font-mono">₱{fmt(item.amount)}</p>
@@ -303,7 +303,7 @@ export default function Expenses() {
                     <button
                       onClick={() => handleLogDue(item)}
                       disabled={loggingDue === item.id}
-                      className="bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 text-emerald-400 text-xs font-semibold rounded-lg px-3 py-1.5 border border-emerald-500/20 transition-colors whitespace-nowrap"
+                      className="bg-accent-500/10 hover:bg-accent-500/20 disabled:opacity-50 text-accent-400 text-xs font-semibold rounded-lg px-3 py-1.5 border border-accent-500/20 transition-colors whitespace-nowrap"
                     >
                       {loggingDue === item.id ? 'Logging...' : 'Log'}
                     </button>
@@ -342,7 +342,7 @@ export default function Expenses() {
                     }
                   }}
                   disabled={settlingCard === cc.id}
-                  className="shrink-0 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 text-emerald-400 text-xs font-semibold rounded-lg px-3 py-1.5 border border-emerald-500/20 transition-colors whitespace-nowrap"
+                  className="shrink-0 bg-accent-500/10 hover:bg-accent-500/20 disabled:opacity-50 text-accent-400 text-xs font-semibold rounded-lg px-3 py-1.5 border border-accent-500/20 transition-colors whitespace-nowrap"
                 >
                   {settlingCard === cc.id ? 'Settling...' : 'Settle All'}
                 </button>
@@ -355,22 +355,22 @@ export default function Expenses() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap mb-6">
         <select value={filterMonth} onChange={e => { setFilterMonth(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors">
           <option value="">All months</option>
           {months.map(m => <option key={m} value={m}>{m}</option>)}
         </select>
         <select value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors">
           <option value="">All categories</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select value={filterBank} onChange={e => { setFilterBank(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors">
           <option value="">All banks</option>
           {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
         <select value={filterMarked} onChange={e => { setFilterMarked(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors">
           <option value="">All expenses</option>
           <option value="marked">Marked only</option>
           <option value="unmarked">Unmarked only</option>
@@ -502,7 +502,7 @@ export default function Expenses() {
                 ) : (
                   <button key={item} onClick={() => setPage(item)}
                     className={`w-8 h-8 rounded-lg text-sm transition-colors ${page === item
-                      ? 'bg-emerald-500 text-neutral-950 font-semibold'
+                      ? 'bg-accent-500 text-neutral-950 font-semibold'
                       : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
                       }`}>
                     {item + 1}

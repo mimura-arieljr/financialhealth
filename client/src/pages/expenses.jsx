@@ -122,6 +122,7 @@ export default function Expenses() {
   const [filterBank, setFilterBank] = useState('')
   const [filterMonth, setFilterMonth] = useState(today().slice(0, 7))
   const [filterMarked, setFilterMarked] = useState('')
+  const [search, setSearch] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
   const [settlingCard, setSettlingCard] = useState(null)
   const [dueItems, setDueItems] = useState([])
@@ -258,12 +259,13 @@ export default function Expenses() {
     if (filterMonth && e.date?.slice(0, 7) !== filterMonth) return false
     if (filterMarked === 'marked' && !e.is_marked) return false
     if (filterMarked === 'unmarked' && e.is_marked) return false
+    if (search.trim() && !e.description?.toLowerCase().includes(search.trim().toLowerCase())) return false
     return true
   })
 
   const totalFiltered = filtered.reduce((sum, e) => sum + Number(e.amount), 0)
   const months = [...new Set(expenses.map(e => e.date?.slice(0, 7)).filter(Boolean))].sort().reverse()
-  const hasFilters = filterMonth || filterCategory || filterBank || filterMarked
+  const hasFilters = filterMonth || filterCategory || filterBank || filterMarked || search
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
@@ -354,29 +356,32 @@ export default function Expenses() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap mb-6">
+        <input type="search" value={search} onChange={e => { setSearch(e.target.value); setPage(0) }}
+          placeholder="Search expenses"
+          className="w-full sm:w-56 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-accent-500 transition-colors" />
         <select value={filterMonth} onChange={e => { setFilterMonth(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors">
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
           <option value="">All months</option>
           {months.map(m => <option key={m} value={m}>{m}</option>)}
         </select>
         <select value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors">
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
           <option value="">All categories</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select value={filterBank} onChange={e => { setFilterBank(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors">
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
           <option value="">All banks</option>
           {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
         <select value={filterMarked} onChange={e => { setFilterMarked(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors">
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
           <option value="">All expenses</option>
           <option value="marked">Marked only</option>
           <option value="unmarked">Unmarked only</option>
         </select>
         {hasFilters && (
-          <button onClick={() => { setFilterMonth(''); setFilterCategory(''); setFilterBank(''); setFilterMarked('') }}
+          <button onClick={() => { setFilterMonth(''); setFilterCategory(''); setFilterBank(''); setFilterMarked(''); setSearch('') }}
             className="text-xs text-neutral-400 hover:text-white px-3 py-2 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-colors">
             Clear filters
           </button>

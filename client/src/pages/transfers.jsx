@@ -174,7 +174,7 @@ export default function Transfers() {
       {/* Filter */}
       <div className="flex gap-3 flex-wrap mb-6">
         <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors">
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
           <option value="">All months</option>
           {months.map(m => <option key={m} value={m}>{m}</option>)}
         </select>

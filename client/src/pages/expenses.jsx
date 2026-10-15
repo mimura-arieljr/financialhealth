@@ -120,6 +120,7 @@ export default function Expenses() {
   const [deleting, setDeleting] = useState(null)
   const [filterCategory, setFilterCategory] = useState('')
   const [filterBank, setFilterBank] = useState('')
+  const [filterCard, setFilterCard] = useState('')
   const [filterMonth, setFilterMonth] = useState(today().slice(0, 7))
   const [filterMarked, setFilterMarked] = useState('')
   const [search, setSearch] = useState('')
@@ -256,6 +257,7 @@ export default function Expenses() {
   const filtered = expenses.filter(e => {
     if (filterCategory && e.categories?.id !== filterCategory) return false
     if (filterBank && e.banks?.id !== filterBank) return false
+    if (filterCard && e.credit_card_id !== filterCard) return false
     if (filterMonth && e.date?.slice(0, 7) !== filterMonth) return false
     if (filterMarked === 'marked' && !e.is_marked) return false
     if (filterMarked === 'unmarked' && e.is_marked) return false
@@ -265,7 +267,7 @@ export default function Expenses() {
 
   const totalFiltered = filtered.reduce((sum, e) => sum + Number(e.amount), 0)
   const months = [...new Set(expenses.map(e => e.date?.slice(0, 7)).filter(Boolean))].sort().reverse()
-  const hasFilters = filterMonth || filterCategory || filterBank || filterMarked || search
+  const hasFilters = filterMonth || filterCategory || filterBank || filterCard || filterMarked || search
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
@@ -374,6 +376,11 @@ export default function Expenses() {
           <option value="">All banks</option>
           {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
+        <select value={filterCard} onChange={e => { setFilterCard(e.target.value); setPage(0) }}
+          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
+          <option value="">All credit cards</option>
+          {creditCards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
         <select value={filterMarked} onChange={e => { setFilterMarked(e.target.value); setPage(0) }}
           className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
           <option value="">All expenses</option>
@@ -381,7 +388,7 @@ export default function Expenses() {
           <option value="unmarked">Unmarked only</option>
         </select>
         {hasFilters && (
-          <button onClick={() => { setFilterMonth(''); setFilterCategory(''); setFilterBank(''); setFilterMarked(''); setSearch('') }}
+          <button onClick={() => { setFilterMonth(''); setFilterCategory(''); setFilterBank(''); setFilterCard(''); setFilterMarked(''); setSearch('') }}
             className="text-xs text-neutral-400 hover:text-white px-3 py-2 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-colors">
             Clear filters
           </button>

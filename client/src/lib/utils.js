@@ -15,18 +15,23 @@ const localMonthStr = (d) => localDateStr(d).slice(0, 7)
 
 export const today = () => localDateStr(new Date())
 
-export function isDueToday(item) {
-  const now = new Date()
+export function isDue(item, now = new Date()) {
   const todayDate = localDateStr(now)
-
-  // Already logged today
-  if (item.last_logged === todayDate) return false
+  const last = item.last_logged || ''
 
   if (item.frequency === 'monthly') {
-    return now.getDate() === item.day_of_month
+    // Clamp so day 31 still lands on the last day of shorter months
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    const dueDay = Math.min(item.day_of_month, lastDay)
+    // Stays due until logged in the current month
+    return now.getDate() >= dueDay && last.slice(0, 7) !== todayDate.slice(0, 7)
   }
   if (item.frequency === 'weekly') {
-    return now.getDay() === item.day_of_week
+    // Most recent occurrence of the weekday (today included)
+    const daysSince = (now.getDay() - item.day_of_week + 7) % 7
+    const dueDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSince)
+    // Stays due until logged on or after that occurrence
+    return last < localDateStr(dueDate)
   }
   return false
 }

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { Modal } from '../components/ui/modal'
-import { fmt, today, isDueToday } from '../lib/utils'
+import { fmt, today, isDue } from '../lib/utils'
 import { ErrorBanner } from '../components/ui/errorBanner'
 import { FieldInput } from '../components/ui/fieldInput'
 import { FieldSelect } from '../components/ui/fieldSelect'
@@ -198,7 +198,7 @@ export default function Expenses() {
       .eq('user_id', user.id)
       .eq('is_active', true)
       .then(({ data }) => {
-        if (data) setDueItems(data.filter(isDueToday))
+        if (data) setDueItems(data.filter(isDue))
       })
   }, [user?.id, refreshKey])
 
@@ -289,7 +289,7 @@ export default function Expenses() {
       {/* Due Recurring Expenses */}
       {dueItems.filter(i => !dismissedDue.includes(i.id)).length > 0 && (
         <div className="mb-6">
-          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Due Today</p>
+          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Due</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {dueItems
               .filter(i => !dismissedDue.includes(i.id))

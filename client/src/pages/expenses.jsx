@@ -200,7 +200,7 @@ export default function Expenses() {
       .eq('user_id', user.id)
       .eq('is_active', true)
       .then(({ data }) => {
-        if (data) setDueItems(data.filter(isDue))
+        if (data) setDueItems(data.filter(i => isDue(i)))
       })
   }, [user?.id, refreshKey])
 

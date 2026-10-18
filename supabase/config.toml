@@ -415,3 +415,10 @@ entrypoint = "./functions/ai-chat/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/ai-chat/*.html" ]
+
+[functions.add-expense]
+enabled = true
+# Auth is a shared secret in the x-api-key header, checked in the function
+verify_jwt = false
+import_map = "./functions/add-expense/deno.json"
+entrypoint = "./functions/add-expense/index.ts"

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { fmt } from '../lib/utils'
+import { logRecurringExpense } from '../lib/recurring'
 import { Modal } from '../components/ui/modal'
 import { DAYS_OF_WEEK } from '../lib/consts'
 import { ErrorBanner } from '../components/ui/errorBanner'
@@ -121,6 +122,8 @@ export default function Recurring() {
   const [editing, setEditing] = useState(null)
   const [deleting, setDeleting] = useState(null)
   const [toggling, setToggling] = useState(null)
+  const [paying, setPaying] = useState(null)
+  const [payError, setPayError] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
@@ -190,6 +193,15 @@ export default function Recurring() {
     setRefreshKey(k => k + 1)
   }
 
+  const handlePayNow = async (item) => {
+    setPaying(item.id)
+    setPayError('')
+    const err = await logRecurringExpense(user.id, item)
+    if (err) setPayError(err)
+    setPaying(null)
+    setRefreshKey(k => k + 1)
+  }
+
   const active = items.filter(i => i.is_active)
   const inactive = items.filter(i => !i.is_active)
 
@@ -208,6 +220,8 @@ export default function Recurring() {
           Add Recurring
         </button>
       </div>
+
+      <ErrorBanner message={payError} />
 
       {loading ? (
         <div className="text-center py-16 text-neutral-600 text-sm">Loading...</div>
@@ -229,8 +243,10 @@ export default function Recurring() {
                     onEdit={() => setEditing(item)}
                     onDelete={() => handleDelete(item.id)}
                     onToggle={() => handleToggle(item)}
+                    onPayNow={() => handlePayNow(item)}
                     deleting={deleting === item.id}
                     toggling={toggling === item.id}
+                    paying={paying === item.id}
                   />
                 ))}
               </div>
@@ -277,7 +293,7 @@ export default function Recurring() {
   )
 }
 
-function RecurringRow({ item, isLast, onEdit, onDelete, onToggle, deleting, toggling }) {
+function RecurringRow({ item, isLast, onEdit, onDelete, onToggle, onPayNow, deleting, toggling, paying }) {
   return (
     <div className={`flex items-center gap-4 px-5 py-4 group hover:bg-neutral-800/30 transition-colors ${!isLast ? 'border-b border-neutral-800/50' : ''}`}>
       {/* Toggle active */}
@@ -308,6 +324,14 @@ function RecurringRow({ item, isLast, onEdit, onDelete, onToggle, deleting, togg
       <span className="text-sm font-mono text-white whitespace-nowrap shrink-0">
         ₱{fmt(item.amount)}
       </span>
+
+      {/* Pay now — active items only */}
+      {item.is_active && (
+        <button onClick={onPayNow} disabled={paying}
+          className="text-xs font-medium px-2.5 py-1 rounded-md bg-neutral-800 hover:bg-accent-500 text-neutral-300 hover:text-neutral-950 transition-colors disabled:opacity-50 shrink-0">
+          {paying ? 'Paying...' : 'Pay now'}
+        </button>
+      )}
 
       {/* Actions */}
       <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">

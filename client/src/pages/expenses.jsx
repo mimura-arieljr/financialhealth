@@ -4,6 +4,7 @@ import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { Modal } from '../components/ui/modal'
 import { fmt, today, isDue } from '../lib/utils'
+import { logRecurringExpense } from '../lib/recurring'
 import { ErrorBanner } from '../components/ui/errorBanner'
 import { FieldInput } from '../components/ui/fieldInput'
 import { FieldSelect } from '../components/ui/fieldSelect'
@@ -206,22 +207,8 @@ export default function Expenses() {
 
   const handleLogDue = async (item) => {
     setLoggingDue(item.id)
-    const todayStr = today()
-    const { error } = await supabase.from('expenses').insert({
-      user_id: user.id,
-      description: item.description,
-      amount: item.amount,
-      date: todayStr,
-      category_id: item.category_id,
-      bank_id: item.bank_id,
-      credit_card_id: item.credit_card_id,
-      is_card_settled: item.credit_card_id ? false : null,
-    })
+    const error = await logRecurringExpense(user.id, item)
     if (!error) {
-      await supabase
-        .from('recurring_expenses')
-        .update({ last_logged: todayStr })
-        .eq('id', item.id)
       setDismissedDue(d => [...d, item.id])
       setRefreshKey(k => k + 1)
     }

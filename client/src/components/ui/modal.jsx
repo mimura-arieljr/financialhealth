@@ -1,15 +1,28 @@
+import { useEffect } from 'react'
+import { IconButton } from './button'
+import { CloseIcon } from './icons'
+
+// Centred dialog on desktop, bottom sheet on mobile
 export function Modal({ title, onClose, children }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    const overflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = overflow
+    }
+  }, [onClose])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-white font-semibold">{title}</h2>
-          <button onClick={onClose} className="text-neutral-500 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center lg:px-4" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="absolute inset-0 bg-ink/40 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="relative bg-card w-full lg:max-w-md rounded-t-[28px] lg:rounded-card px-5 pt-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] lg:p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+        <div className="lg:hidden w-9 h-1 rounded-full bg-line mx-auto -mt-1 mb-4" />
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-bold tracking-tight">{title}</h2>
+          <IconButton label="Close" onClick={onClose}><CloseIcon /></IconButton>
         </div>
         {children}
       </div>

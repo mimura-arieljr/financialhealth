@@ -23,3 +23,18 @@ export function tint(hex, alpha = 0.12) {
   const n = parseInt(hex.slice(1), 16)
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
 }
+
+// WCAG relative luminance of a #RRGGBB colour
+function luminance(hex) {
+  const n = parseInt(hex.slice(1), 16)
+  const lin = (c) => {
+    const s = c / 255
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255)
+}
+
+// Avatar on a soft tint; light colours get ink text so initials stay readable
+export function avatarColors(hex) {
+  return { bg: tint(hex, 0.14), fg: luminance(hex) > 0.25 ? '#0E1116' : hex }
+}

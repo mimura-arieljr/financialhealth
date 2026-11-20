@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { initials, categoryColorMap, categoryColor, bankColor, tint } from './palette'
+import { initials, categoryColorMap, categoryColor, bankColor, tint, avatarColors } from './palette'
 import { CATEGORY_PALETTE, BANK_PALETTE, UNCATEGORISED_COLOR } from './consts'
 
 describe('palette', () => {
@@ -31,4 +31,9 @@ describe('palette', () => {
     expect(BANK_PALETTE).toContain(bankColor('GCash'))
   })
   it('tint', () => expect(tint('#0E7490')).toBe('rgba(14, 116, 144, 0.12)'))
+  it('avatarColors keeps text readable', () => {
+    expect(avatarColors('#0E7490')).toEqual({ bg: 'rgba(14, 116, 144, 0.14)', fg: '#0E7490' })
+    expect(avatarColors('#00DCEB')).toEqual({ bg: 'rgba(0, 220, 235, 0.14)', fg: '#0E1116' })
+    expect(avatarColors('#94A3B8').fg).toBe('#0E1116')
+  })
 })

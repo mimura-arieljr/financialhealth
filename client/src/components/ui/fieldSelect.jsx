@@ -1,11 +1,13 @@
+import { FIELD } from './fieldInput'
+
 export function FieldSelect({ label, value, onChange, children, required }) {
   return (
-    <div>
-      {label && <label className="block text-xs text-neutral-400 mb-1.5">{label}</label>}
+    <label className="block min-w-0">
+      {label && <span className="block text-xs font-semibold text-muted mb-1.5">{label}</span>}
       <select value={value} onChange={e => onChange(e.target.value)} required={required}
-        className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-base md:text-sm text-white focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/50 transition-colors appearance-none">
+        className={`${FIELD} select-chevron`}>
         {children}
       </select>
-    </div>
+    </label>
   )
 }

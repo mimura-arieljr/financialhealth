@@ -11,16 +11,25 @@ import Settings from './pages/settings'
 import AiChat from './pages/ai'
 import Transfers from './pages/transfers'
 
+// Light splash while the session loads
+function AppLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-canvas" aria-label="Loading">
+      <img src="/fundora_logo.svg" alt="" className="w-10 h-10 animate-pulse" />
+    </div>
+  )
+}
+
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-white">Loading...</div>
+  if (loading) return <AppLoading />
   if (!user) return <Navigate to="/login" replace />
   return children
 }
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-white">Loading...</div>
+  if (loading) return <AppLoading />
   if (user) return <Navigate to="/" replace />
   return children
 }

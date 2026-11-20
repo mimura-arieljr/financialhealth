@@ -1,7 +1,33 @@
 @import "tailwindcss";
 
-/* Brand accent; change here to re-theme */
+/* Fundora light theme tokens (spec 5.1) */
 @theme {
+  --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #0E1116;
+  --color-muted: #6B7280;
+  --color-faint: #9CA3AF;
+  --color-canvas: #ECEFF2;
+  --color-card: #FFFFFF;
+  --color-sub: #F4F6F8;
+  --color-line: #E7EAEE;
+  --color-cyan: #00FFFF;
+  --color-cyan-chart: #00E5F2;
+  --color-cyan-stroke: #06B6D4;
+  --color-cyan-ink: #0E7490;
+  --color-good: #15803D;
+  --color-good-bg: #DCFCE7;
+  --color-alert: #B91C1C;
+  --color-alert-bg: #FEE2E2;
+  --color-warn: #B45309;
+  --color-warn-bg: #FEF3C7;
+  --color-mark-bg: #CFFAFE;
+
+  --radius-card: 22px;
+  --radius-panel: 16px;
+  --radius-row: 14px;
+
+  /* Old accent; removed once every page is on the new kit */
   --color-accent-300: #99ffff;
   --color-accent-400: #66ffff;
   --color-accent-500: #00ffff;
@@ -9,14 +35,31 @@
 
 html,
 body {
-  background-color: #0a0a0a;
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+@utility bg-hero {
+  background-image: linear-gradient(150deg, #8AFDFF, #00EFFA 45%, #00CFE3);
+}
+
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Diagonal hatch for "the rest" in marked and projected bars */
+@utility hatch {
+  background-color: #EEF1F4;
+  background-image: repeating-linear-gradient(135deg, #D5DBE1 0 2px, transparent 2px 7px);
 }
 
 /* Custom chevron so the select arrow has breathing room from the edge */
 .select-chevron {
   appearance: none;
   padding-right: 2.25rem;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 1rem;

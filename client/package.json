@@ -11,6 +11,7 @@
     "test": "TZ=Asia/Manila vitest run"
   },
   "dependencies": {
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
     "@supabase/supabase-js": "^2.98.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

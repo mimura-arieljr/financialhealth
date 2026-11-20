@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { QuickAddProvider } from './quickAdd'
 
 const navItems = [
   {
@@ -141,7 +142,7 @@ export default function Layout() {
 
       {/* Main content */}
       <main className="flex-1 overflow-auto pb-20 sm:pb-0">
-        <Outlet />
+        <QuickAddProvider><Outlet /></QuickAddProvider>
       </main>
 
       {/* Bottom nav — mobile only */}

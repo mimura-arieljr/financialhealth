@@ -3,87 +3,8 @@ import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { Modal } from '../components/ui/modal'
-import { fmt, today } from '../lib/utils'
-import { ErrorBanner } from '../components/ui/errorBanner'
-import { FieldInput } from '../components/ui/fieldInput'
-import { FieldSelect } from '../components/ui/fieldSelect'
-
-function TransferForm({ initialValues, banks, onSubmit, onClose, submitLabel }) {
-  const [fromBankId, setFromBankId] = useState(initialValues?.from_bank_id || '')
-  const [toBankId, setToBankId] = useState(initialValues?.to_bank_id || '')
-  const [amount, setAmount] = useState(initialValues?.amount ? String(initialValues.amount) : '')
-  const [date, setDate] = useState(initialValues?.date || today())
-  const [note, setNote] = useState(initialValues?.note || '')
-  const [error, setError] = useState('')
-  const [saving, setSaving] = useState(false)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    if (!fromBankId || !toBankId || !amount || !date) {
-      setError('From bank, to bank, amount, and date are required.')
-      return
-    }
-    if (fromBankId === toBankId) {
-      setError('From and To banks must be different.')
-      return
-    }
-    setSaving(true)
-    const err = await onSubmit({
-      from_bank_id: fromBankId,
-      to_bank_id: toBankId,
-      amount: parseFloat(amount),
-      date,
-      note: note.trim() || null,
-    })
-    if (err) setError(err)
-    setSaving(false)
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <FieldSelect label="From Bank" value={fromBankId} onChange={setFromBankId} required>
-        <option value="">— Select source bank —</option>
-        {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-      </FieldSelect>
-
-      {/* Arrow indicator */}
-      <div className="flex items-center justify-center">
-        <div className="flex items-center gap-2 text-neutral-600">
-          <div className="h-px w-16 bg-neutral-700" />
-          <svg className="w-4 h-4 text-accent-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
-          <div className="h-px w-16 bg-neutral-700" />
-        </div>
-      </div>
-
-      <FieldSelect label="To Bank" value={toBankId} onChange={setToBankId} required>
-        <option value="">— Select destination bank —</option>
-        {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-      </FieldSelect>
-
-      <FieldInput label="Amount (₱)" type="number" value={amount} onChange={setAmount}
-        placeholder="0.00" required min="0.01" step="0.01" />
-      <FieldInput label="Date" type="date" value={date} onChange={setDate} required />
-
-      <FieldInput label="Note (optional)" value={note} onChange={setNote}
-        placeholder="e.g. Load for bills" />
-
-      <ErrorBanner message={error} />
-      <div className="flex gap-3 pt-2">
-        <button type="button" onClick={onClose}
-          className="flex-1 bg-neutral-800 hover:bg-neutral-700 text-white text-sm font-medium rounded-lg py-2.5 transition-colors">
-          Cancel
-        </button>
-        <button type="submit" disabled={saving}
-          className="flex-1 bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 text-sm font-semibold rounded-lg py-2.5 transition-colors">
-          {saving ? 'Saving...' : submitLabel}
-        </button>
-      </div>
-    </form>
-  )
-}
+import { TransferForm } from '../components/forms/transferForm'
+import { fmt } from '../lib/utils'
 
 export default function Transfers() {
   const { user } = useAuth()

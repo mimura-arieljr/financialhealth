@@ -3,110 +3,16 @@ import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { Modal } from '../components/ui/modal'
+import { ExpenseForm } from '../components/forms/expenseForm'
 import { fmt, today, isDue } from '../lib/utils'
 import { logRecurringExpense } from '../lib/recurring'
 import { ErrorBanner } from '../components/ui/errorBanner'
-import { FieldInput } from '../components/ui/fieldInput'
-import { FieldSelect } from '../components/ui/fieldSelect'
 
 
 function CardStatusBadge({ creditCardId, isCardSettled }) {
   if (!creditCardId) return <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-400">Cash</span>
   if (isCardSettled) return <span className="text-xs px-2 py-0.5 rounded-full bg-accent-500/10 text-accent-400">Settled</span>
   return <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400">Unpaid</span>
-}
-
-function ExpenseForm({ initialValues, banks, creditCards, categories, onSubmit, onClose, submitLabel }) {
-  const [description, setDescription] = useState(initialValues?.description || '')
-  const [amount, setAmount] = useState(initialValues?.amount ? String(initialValues.amount) : '')
-  const [date, setDate] = useState(initialValues?.date || today())
-  const [categoryId, setCategoryId] = useState(initialValues?.category_id || '')
-  const [bankId, setBankId] = useState(initialValues?.bank_id || '')
-  const [creditCardId, setCreditCardId] = useState(initialValues?.credit_card_id || '')
-  const [isCardSettled, setIsCardSettled] = useState(initialValues?.is_card_settled || false)
-  const [isMarked, setIsMarked] = useState(initialValues?.is_marked || false)
-  const [error, setError] = useState('')
-  const [saving, setSaving] = useState(false)
-
-  const usedCard = creditCardId !== ''
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    if (!description.trim() || !amount || !date || !bankId) {
-      setError('Description, amount, date, and bank are required.')
-      return
-    }
-    setSaving(true)
-    const err = await onSubmit({
-      description: description.trim(),
-      amount: parseFloat(amount),
-      date,
-      category_id: categoryId || null,
-      bank_id: bankId,
-      credit_card_id: creditCardId || null,
-      is_card_settled: usedCard ? isCardSettled : null,
-      is_marked: isMarked,
-    })
-    if (err) setError(err)
-    setSaving(false)
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <FieldInput label="Description" value={description} onChange={setDescription} placeholder="e.g. Starbucks" required />
-      <FieldInput label="Amount (₱)" type="number" value={amount} onChange={setAmount} placeholder="0.00" required min="0.01" step="0.01" />
-      <FieldInput label="Date" type="date" value={date} onChange={setDate} required />
-      <div className="grid grid-cols-[1fr_auto] gap-3 items-start">
-        <FieldSelect label="Category" value={categoryId} onChange={setCategoryId}>
-          <option value="">— Select category —</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </FieldSelect>
-        <label className="flex flex-col items-center gap-1.5 cursor-pointer">
-          <span className="text-xs text-neutral-400">Mark</span>
-          <input type="checkbox" checked={isMarked} onChange={e => setIsMarked(e.target.checked)} className="sr-only" />
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center border transition-colors ${isMarked ? 'bg-violet-500 border-violet-500' : 'bg-neutral-800 border-neutral-700'}`}>
-            {isMarked && (
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </div>
-        </label>
-      </div>
-      <FieldSelect label="Financing Bank" value={bankId} onChange={setBankId} required>
-        <option value="">— Select bank —</option>
-        {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-      </FieldSelect>
-      <FieldSelect label="Credit Card (optional)" value={creditCardId} onChange={setCreditCardId}>
-        <option value="">— Cash / Direct Debit —</option>
-        {creditCards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-      </FieldSelect>
-      {usedCard && (
-        <div className="flex items-center justify-between bg-neutral-800 rounded-lg px-4 py-3">
-          <div>
-            <p className="text-sm text-white">Card bill settled?</p>
-            <p className="text-xs text-neutral-500 mt-0.5">Toggle on if you've already paid this card bill</p>
-          </div>
-          <button type="button" onClick={() => setIsCardSettled(v => !v)}
-            className={`relative inline-flex w-10 h-6 rounded-full transition-colors shrink-0 ${isCardSettled ? 'bg-accent-500' : 'bg-neutral-600'}`}>
-            <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${isCardSettled ? 'translate-x-4' : ''}`} />
-          </button>
-        </div>
-      )}
-      <ErrorBanner message={error} />
-      <div className="flex gap-3 pt-2">
-        <button type="button" onClick={onClose}
-          className="flex-1 bg-neutral-800 hover:bg-neutral-700 text-white text-sm font-medium rounded-lg py-2.5 transition-colors">
-          Cancel
-        </button>
-        <button type="submit" disabled={saving}
-          className="flex-1 bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 text-sm font-semibold rounded-lg py-2.5 transition-colors">
-          {saving ? 'Saving...' : submitLabel}
-        </button>
-      </div>
-    </form>
-  )
 }
 
 export default function Expenses() {

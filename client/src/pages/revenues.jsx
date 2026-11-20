@@ -3,62 +3,8 @@ import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { Modal } from '../components/ui/modal'
-import { fmt, today } from '../lib/utils'
-import { ErrorBanner } from '../components/ui/errorBanner'
-import { FieldInput } from '../components/ui/fieldInput'
-import { FieldSelect } from '../components/ui/fieldSelect'
-
-function RevenueForm({ initialValues, banks, onSubmit, onClose, submitLabel }) {
-  const [description, setDescription] = useState(initialValues?.description || '')
-  const [amount, setAmount] = useState(initialValues?.amount ? String(initialValues.amount) : '')
-  const [date, setDate] = useState(initialValues?.date || today())
-  const [bankId, setBankId] = useState(initialValues?.bank_id || '')
-  const [error, setError] = useState('')
-  const [saving, setSaving] = useState(false)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    if (!description.trim() || !amount || !date || !bankId) {
-      setError('All fields are required.')
-      return
-    }
-    setSaving(true)
-    const err = await onSubmit({
-      description: description.trim(),
-      amount: parseFloat(amount),
-      date,
-      bank_id: bankId,
-    })
-    if (err) setError(err)
-    setSaving(false)
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <FieldInput label="Description" value={description} onChange={setDescription}
-        placeholder="e.g. Salary NCS" required />
-      <FieldInput label="Amount (₱)" type="number" value={amount} onChange={setAmount}
-        placeholder="0.00" required min="0.01" step="0.01" />
-      <FieldInput label="Date" type="date" value={date} onChange={setDate} required />
-      <FieldSelect label="Bank Recipient" value={bankId} onChange={setBankId} required>
-        <option value="">— Select bank —</option>
-        {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-      </FieldSelect>
-      <ErrorBanner message={error} />
-      <div className="flex gap-3 pt-2">
-        <button type="button" onClick={onClose}
-          className="flex-1 bg-neutral-800 hover:bg-neutral-700 text-white text-sm font-medium rounded-lg py-2.5 transition-colors">
-          Cancel
-        </button>
-        <button type="submit" disabled={saving}
-          className="flex-1 bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 text-sm font-semibold rounded-lg py-2.5 transition-colors">
-          {saving ? 'Saving...' : submitLabel}
-        </button>
-      </div>
-    </form>
-  )
-}
+import { RevenueForm } from '../components/forms/revenueForm'
+import { fmt } from '../lib/utils'
 
 export default function Revenues() {
   const { user, loading: authLoading } = useAuth()

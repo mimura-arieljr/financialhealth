@@ -59,3 +59,18 @@ export function cardDebt(expenses) {
   const unpaid = expenses.filter(e => e.credit_card_id && e.is_card_settled === false)
   return { total: sum(unpaid), cardCount: new Set(unpaid.map(e => e.credit_card_id)).size }
 }
+
+// Spend per category, biggest first; no category or a deleted one counts as "Uncategorised"
+export function categoryTotals(expenses, categories, key) {
+  const names = new Map(categories.map(c => [c.id, c.name]))
+  const totals = new Map()
+  for (const e of expenses) {
+    if (key && e.date?.slice(0, 7) !== key) continue
+    const id = names.has(e.category_id) ? e.category_id : null
+    totals.set(id, (totals.get(id) || 0) + Number(e.amount))
+  }
+  return [...totals.entries()]
+    .map(([id, value]) => ({ id, name: id === null ? 'Uncategorised' : names.get(id), value }))
+    .filter(c => c.value > 0)
+    .sort((a, b) => b.value - a.value)
+}

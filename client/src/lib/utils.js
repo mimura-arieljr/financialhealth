@@ -14,6 +14,15 @@ export const fmtPeso = (n, { sign = false } = {}) => {
   return body
 }
 
+// Two decimals with sign: "₱1,240.50", "−₱1,240.00", "+₱42,000.00" with { sign: true }
+export const fmtMoney = (n, { sign = false } = {}) => {
+  const cents = Math.round(Number(n) * 100) || 0
+  const body = `₱${(Math.abs(cents) / 100).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  if (cents < 0) return `${MINUS}${body}`
+  if (cents > 0 && sign) return `+${body}`
+  return body
+}
+
 export const fmtShort = (n) => {
   const num = Number(n)
   const abs = Math.abs(num)

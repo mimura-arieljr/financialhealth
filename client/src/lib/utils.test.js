@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   monthKey, shiftMonth, daysInMonth, monthName, monthShort, monthLabel,
-  fmtDayMonth, lastMonthEnd, monthOptions, fmtPeso, fmtShort, pctChange, deltaTone,
+  fmtDayMonth, lastMonthEnd, monthOptions, fmtPeso, fmtMoney, fmtShort, pctChange, deltaTone,
 } from './utils'
 
 const NOW = new Date(2026, 10, 21) // Sat 21 Nov 2026
@@ -74,4 +74,12 @@ describe('pctChange and deltaTone', () => {
     expect(deltaTone(0, 'up')).toBe('neutral')
     expect(deltaTone(null, 'up')).toBeNull()
   })
+})
+
+describe('fmtMoney', () => {
+  it('two decimals with peso sign', () => expect(fmtMoney(1240.5)).toBe('₱1,240.50'))
+  it('real minus sign', () => expect(fmtMoney(-1240)).toBe('\u2212₱1,240.00'))
+  it('plus sign on request', () => expect(fmtMoney('42000', { sign: true })).toBe('+₱42,000.00'))
+  it('no sign on zero', () => expect(fmtMoney(0, { sign: true })).toBe('₱0.00'))
+  it('rounds to cents', () => expect(fmtMoney(1.239)).toBe('₱1.24'))
 })

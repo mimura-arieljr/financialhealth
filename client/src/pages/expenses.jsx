@@ -1,68 +1,161 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
-import { Modal } from '../components/ui/modal'
-import { ExpenseForm } from '../components/forms/expenseForm'
-import { fmt, today, isDue } from '../lib/utils'
+import { useQuickAdd } from '../hooks/useQuickAdd'
 import { logRecurringExpense } from '../lib/recurring'
-import { ErrorBanner } from '../components/ui/errorBanner'
+import { cardDebt, categoryTotals } from '../lib/finance'
+import { expensesHeadline } from '../lib/headlines'
+import { groupByDay } from '../lib/grouping'
+import { categoryColorMap, categoryColor } from '../lib/palette'
+import { fmt, fmtMoney, fmtPeso, isDue, monthKey, monthName, monthOptions } from '../lib/utils'
+import { Modal } from '../components/ui/modal'
+import { Card } from '../components/ui/card'
+import { Button, IconButton } from '../components/ui/button'
+import { Badge, Chip } from '../components/ui/pill'
+import { PageHeader } from '../components/ui/pageHeader'
+import { MonthSwitcher } from '../components/ui/monthSwitcher'
+import { FilterPill } from '../components/ui/filterPill'
+import { SearchField } from '../components/ui/searchField'
+import { DayGroup } from '../components/ui/dayGroup'
+import { EmptyState } from '../components/ui/emptyState'
+import { Skeleton } from '../components/ui/skeleton'
+import { Pagination } from '../components/ui/pagination'
+import { RowActions } from '../components/ui/rowActions'
+import { BankPill, CategoryAvatar } from '../components/ui/avatar'
+import { CloseIcon, PlusIcon, StarIcon } from '../components/ui/icons'
+import { ExpenseForm } from '../components/forms/expenseForm'
 
+const PAGE_SIZE = 10
+const MARKED_OPTIONS = [{ value: 'marked', label: 'Marked' }, { value: 'unmarked', label: 'Not marked' }]
 
-function CardStatusBadge({ creditCardId, isCardSettled }) {
-  if (!creditCardId) return <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-400">Cash</span>
-  if (isCardSettled) return <span className="text-xs px-2 py-0.5 rounded-full bg-accent-500/10 text-accent-400">Settled</span>
-  return <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400">Unpaid</span>
+function cardStatus(e) {
+  if (!e.credit_card_id) return { label: 'Cash', tone: 'neutral', short: 'Cash' }
+  const card = e.credit_cards?.name || 'Card'
+  if (e.is_card_settled) return { label: `${card} · Settled`, tone: 'good', short: 'Settled' }
+  return { label: `${card} · Unpaid`, tone: 'warn', short: 'Unpaid' }
 }
 
+function DueToLog({ items, onLog, onDismiss, logging }) {
+  return (
+    <Card title="Due to log" subtitle="Recurring expenses that are due now">
+      <ul className="space-y-1.5">
+        {items.map(item => (
+          <li key={item.id} className="flex items-center gap-2 bg-sub rounded-row pl-3 pr-1.5 py-1.5">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold truncate">{item.description}</p>
+              <p className="text-xs text-muted tnum">{fmtPeso(item.amount)}</p>
+            </div>
+            <Button size="sm" variant="cyan" disabled={logging === item.id} onClick={() => onLog(item)}>
+              {logging === item.id ? 'Logging...' : 'Log'}
+            </Button>
+            <IconButton label={`Dismiss ${item.description}`} size="w-8 h-8" variant="light" onClick={() => onDismiss(item.id)}>
+              <CloseIcon className="w-3.5 h-3.5" />
+            </IconButton>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  )
+}
+
+function UnpaidCards({ cards, onSettle, settling }) {
+  const confirmSettle = (cc) => {
+    const n = cc.items.length
+    if (confirm(`Mark all ${cc.name} charges as settled?\n\n₱${fmt(cc.total)} across ${n} expense${n !== 1 ? 's' : ''}`)) onSettle(cc.id)
+  }
+  return (
+    <Card title="Unpaid card charges" subtitle="Charges not yet paid off">
+      <ul className="space-y-1.5">
+        {cards.map(cc => (
+          <li key={cc.id} className="flex items-center gap-2 bg-sub rounded-row pl-3 pr-1.5 py-1.5">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold truncate">{cc.name}</p>
+              <p className="text-xs text-muted tnum">{cc.items.length} {cc.items.length === 1 ? 'charge' : 'charges'} · <span className="text-warn font-semibold">{fmtPeso(cc.total)}</span></p>
+            </div>
+            <Button size="sm" variant="white" disabled={settling === cc.id} onClick={() => confirmSettle(cc)}>
+              {settling === cc.id ? 'Settling...' : 'Settle all'}
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  )
+}
+
+function ByCategory({ totals, colors, subtitle }) {
+  const top = totals.slice(0, 3)
+  const rest = totals.slice(3)
+  const max = top[0]?.value || 1
+  return (
+    <Card title="By category" subtitle={subtitle}>
+      <ul className="space-y-2.5">
+        {top.map(c => (
+          <li key={c.id ?? 'none'} className="flex items-center gap-2 text-xs">
+            <span className="w-24 truncate text-[#374151]">{c.name}</span>
+            <span className="flex-1 h-2 bg-sub rounded-full overflow-hidden">
+              <span className="block h-full rounded-full" style={{ width: `${(c.value / max) * 100}%`, background: categoryColor(colors, c.id) }} />
+            </span>
+            <span className="w-20 text-right font-semibold tnum">{fmtPeso(c.value)}</span>
+          </li>
+        ))}
+      </ul>
+      {rest.length > 0 && (
+        <p className="text-xs text-muted mt-3">+{rest.length} more · <span className="tnum">{fmtPeso(rest.reduce((s, c) => s + c.value, 0))}</span></p>
+      )}
+    </Card>
+  )
+}
+
+const GRID_COLS = { 1: 'lg:grid-cols-1', 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3' }
+
 export default function Expenses() {
-  const { user, loading: authLoading } = useAuth()
+  const { user } = useAuth()
+  const userId = user?.id
+  const { openQuickAdd, dataVersion, notifySaved } = useQuickAdd()
+  const now = useMemo(() => new Date(), [])
+
   const [banks, setBanks] = useState([])
   const [creditCards, setCreditCards] = useState([])
   const [categories, setCategories] = useState([])
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showAdd, setShowAdd] = useState(false)
-  const [editingExpense, setEditingExpense] = useState(null)
+  const [editing, setEditing] = useState(null)
   const [deleting, setDeleting] = useState(null)
+  const [month, setMonth] = useState(monthKey(now))
   const [filterCategory, setFilterCategory] = useState('')
   const [filterBank, setFilterBank] = useState('')
   const [filterCard, setFilterCard] = useState('')
-  const [filterMonth, setFilterMonth] = useState(today().slice(0, 7))
   const [filterMarked, setFilterMarked] = useState('')
   const [search, setSearch] = useState('')
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [page, setPage] = useState(0)
   const [settlingCard, setSettlingCard] = useState(null)
   const [dueItems, setDueItems] = useState([])
   const [loggingDue, setLoggingDue] = useState(null)
   const [dismissedDue, setDismissedDue] = useState([])
-  const [page, setPage] = useState(0)
-  const PAGE_SIZE = 10
 
   useEffect(() => {
-    if (!user?.id) return
-    const fetchRef = async () => {
-      const [b, cc, cat] = await Promise.all([
-        fetchCached('banks', user.id, 'id, name', 'name'),
-        fetchCached('credit_cards', user.id, 'id, name', 'name'),
-        fetchCached('categories', user.id, 'id, name', 'name'),
-      ])
+    if (!userId) return
+    Promise.all([
+      fetchCached('banks', userId, 'id, name', 'name'),
+      fetchCached('credit_cards', userId, 'id, name', 'name'),
+      fetchCached('categories', userId, 'id, name', 'name'),
+    ]).then(([b, cc, cat]) => {
       if (!b.error) setBanks(b.data)
       if (!cc.error) setCreditCards(cc.data)
       if (!cat.error) setCategories(cat.data)
-    }
-    fetchRef()
-  }, [user?.id, refreshKey])
+    })
+  }, [userId, dataVersion])
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!userId) return
     let cancelled = false
     supabase
       .from('expenses')
       .select(`id, description, amount, date, is_card_settled, is_marked, created_at,
         category_id, bank_id, credit_card_id,
         categories(id, name), banks(id, name), credit_cards(id, name)`)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('date', { ascending: false })
       .order('created_at', { ascending: false })
       .then(({ data, error }) => {
@@ -71,21 +164,26 @@ export default function Expenses() {
         setLoading(false)
       })
     return () => { cancelled = true }
-  }, [user?.id, refreshKey])
+  }, [userId, dataVersion])
 
-  const handleAdd = async (values) => {
-    const { error } = await supabase.from('expenses').insert({ user_id: user.id, ...values })
-    if (error) return error.message
-    setRefreshKey(k => k + 1)
-    setShowAdd(false)
-    return null
-  }
+  useEffect(() => {
+    if (!userId) return
+    supabase
+      .from('recurring_expenses')
+      .select(`id, description, amount, frequency, day_of_month, day_of_week,
+        last_logged, category_id, bank_id, credit_card_id`)
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .then(({ data }) => {
+        if (data) setDueItems(data.filter(i => isDue(i)))
+      })
+  }, [userId, dataVersion])
 
   const handleEdit = async (values) => {
-    const { error } = await supabase.from('expenses').update(values).eq('id', editingExpense.id)
+    const { error } = await supabase.from('expenses').update(values).eq('id', editing.id)
     if (error) return error.message
-    setRefreshKey(k => k + 1)
-    setEditingExpense(null)
+    setEditing(null)
+    notifySaved()
     return null
   }
 
@@ -94,29 +192,16 @@ export default function Expenses() {
     setDeleting(id)
     await supabase.from('expenses').delete().eq('id', id)
     setDeleting(null)
-    setRefreshKey(k => k + 1)
+    setEditing(null)
+    notifySaved()
   }
-
-  // Fetch due recurring expenses
-  useEffect(() => {
-    if (!user?.id) return
-    supabase
-      .from('recurring_expenses')
-      .select(`id, description, amount, frequency, day_of_month, day_of_week,
-        last_logged, category_id, bank_id, credit_card_id`)
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .then(({ data }) => {
-        if (data) setDueItems(data.filter(i => isDue(i)))
-      })
-  }, [user?.id, refreshKey])
 
   const handleLogDue = async (item) => {
     setLoggingDue(item.id)
-    const error = await logRecurringExpense(user.id, item)
+    const error = await logRecurringExpense(userId, item)
     if (!error) {
       setDismissedDue(d => [...d, item.id])
-      setRefreshKey(k => k + 1)
+      notifySaved()
     }
     setLoggingDue(null)
   }
@@ -126,319 +211,139 @@ export default function Expenses() {
     const { error } = await supabase
       .from('expenses')
       .update({ is_card_settled: true })
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('credit_card_id', creditCardId)
       .eq('is_card_settled', false)
-    if (!error) setRefreshKey(k => k + 1)
+    if (!error) notifySaved()
     setSettlingCard(null)
   }
 
-  // Group unsettled card expenses by credit card
-  const unsettledByCard = creditCards
-    .map(cc => ({
-      ...cc,
-      unsettledExpenses: expenses.filter(
-        e => e.credit_card_id === cc.id && e.is_card_settled === false
-      )
-    }))
-    .filter(cc => cc.unsettledExpenses.length > 0)
-    .map(cc => ({
-      ...cc,
-      total: cc.unsettledExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
-    }))
+  // Filter setters also go back to the first page
+  const withReset = (setter) => (v) => { setter(v); setPage(0) }
 
-  const filtered = expenses.filter(e => {
-    if (filterCategory && e.categories?.id !== filterCategory) return false
-    if (filterBank && e.banks?.id !== filterBank) return false
+  const colors = categoryColorMap(categories)
+  const inMonth = month ? expenses.filter(e => e.date?.slice(0, 7) === month) : expenses
+  const monthTotal = inMonth.reduce((s, e) => s + Number(e.amount), 0)
+  const catTotals = categoryTotals(expenses, categories, month)
+  const markedTotal = inMonth.filter(e => e.is_marked).reduce((s, e) => s + Number(e.amount), 0)
+  const unpaidTotal = cardDebt(expenses).total
+
+  const visibleDue = dueItems.filter(i => !dismissedDue.includes(i.id))
+  const unpaidByCard = creditCards
+    .map(cc => {
+      const items = expenses.filter(e => e.credit_card_id === cc.id && e.is_card_settled === false)
+      return { ...cc, items, total: items.reduce((s, e) => s + Number(e.amount), 0) }
+    })
+    .filter(cc => cc.items.length > 0)
+
+  const q = search.trim().toLowerCase()
+  const filtered = inMonth.filter(e => {
+    if (filterCategory && e.category_id !== filterCategory) return false
+    if (filterBank && e.bank_id !== filterBank) return false
     if (filterCard && e.credit_card_id !== filterCard) return false
-    if (filterMonth && e.date?.slice(0, 7) !== filterMonth) return false
     if (filterMarked === 'marked' && !e.is_marked) return false
     if (filterMarked === 'unmarked' && e.is_marked) return false
-    if (search.trim() && !e.description?.toLowerCase().includes(search.trim().toLowerCase())) return false
+    if (q && !e.description?.toLowerCase().includes(q)) return false
     return true
   })
-
-  const totalFiltered = filtered.reduce((sum, e) => sum + Number(e.amount), 0)
-  const months = [...new Set(expenses.map(e => e.date?.slice(0, 7)).filter(Boolean))].sort().reverse()
-  const hasFilters = filterMonth || filterCategory || filterBank || filterCard || filterMarked || search
-
+  const filteredTotal = filtered.reduce((s, e) => s + Number(e.amount), 0)
+  const hasFilters = filterCategory || filterBank || filterCard || filterMarked || search
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
-  if (authLoading || !user) return null
+  const clearFilters = () => {
+    setFilterCategory(''); setFilterBank(''); setFilterCard(''); setFilterMarked(''); setSearch(''); setPage(0)
+  }
+
+  const topCards = [
+    visibleDue.length > 0 && <DueToLog key="due" items={visibleDue} onLog={handleLogDue} onDismiss={id => setDismissedDue(d => [...d, id])} logging={loggingDue} />,
+    unpaidByCard.length > 0 && <UnpaidCards key="cards" cards={unpaidByCard} onSettle={handleSettleCard} settling={settlingCard} />,
+    catTotals.length > 0 && <ByCategory key="cats" totals={catTotals} colors={colors} subtitle={month ? monthName(month) : 'All months'} />,
+  ].filter(Boolean)
 
   return (
-    <div className="p-4 sm:p-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Expenses</h1>
-          <p className="text-neutral-500 text-sm mt-1">Track and manage your spending.</p>
-        </div>
-        <button onClick={() => setShowAdd(true)}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto bg-accent-500 hover:bg-accent-400 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Add Expense
-        </button>
-      </div>
+    <div>
+      <PageHeader
+        title="Expenses"
+        headline={loading ? null : expensesHeadline({
+          total: monthTotal, count: inMonth.length, monthName: month ? monthName(month) : null,
+          top: catTotals[0] ? { name: catTotals[0].name, total: catTotals[0].value } : null,
+        })}
+        chips={!loading && <>
+          {markedTotal > 0 && <Chip dot="cyan">{fmtPeso(markedTotal)} marked</Chip>}
+          {unpaidTotal > 0 && <Chip dot="warn">{fmtPeso(unpaidTotal)} unpaid on cards</Chip>}
+        </>}
+        month={<MonthSwitcher value={month} onChange={withReset(setMonth)} options={monthOptions(expenses.map(e => e.date?.slice(0, 7)), now)} />}
+        actions={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('expense')} className="hidden lg:inline-flex">Add expense</Button>}
+      />
 
-      {/* Due Recurring Expenses */}
-      {dueItems.filter(i => !dismissedDue.includes(i.id)).length > 0 && (
-        <div className="mb-6">
-          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Due</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {dueItems
-              .filter(i => !dismissedDue.includes(i.id))
-              .map(item => (
-                <div key={item.id} className="bg-neutral-900 border border-accent-500/20 rounded-xl px-4 py-3.5 flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-sm text-white font-medium truncate">{item.description}</p>
-                    <p className="text-xs text-neutral-500 mt-0.5 font-mono">₱{fmt(item.amount)}</p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => handleLogDue(item)}
-                      disabled={loggingDue === item.id}
-                      className="bg-accent-500/10 hover:bg-accent-500/20 disabled:opacity-50 text-accent-400 text-xs font-semibold rounded-lg px-3 py-1.5 border border-accent-500/20 transition-colors whitespace-nowrap"
-                    >
-                      {loggingDue === item.id ? 'Logging...' : 'Log'}
-                    </button>
-                    <button
-                      onClick={() => setDismissedDue(d => [...d, item.id])}
-                      className="text-neutral-600 hover:text-neutral-400 transition-colors p-1"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
+      {topCards.length > 0 && (
+        <div className={`flex lg:grid ${GRID_COLS[topCards.length]} gap-4 overflow-x-auto lg:overflow-visible snap-x -mx-4 px-4 lg:mx-0 lg:px-0 mb-4 [&>*]:min-w-[280px] lg:[&>*]:min-w-0 [&>*]:snap-start`}>
+          {topCards}
+        </div>
+      )}
+
+      <Card>
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-4">
+          <div className="flex items-center gap-2 overflow-x-auto -mx-5 px-5 lg:mx-0 lg:px-0 lg:flex-wrap">
+            <SearchField value={search} onChange={withReset(setSearch)} placeholder="Search expenses" className="w-44 shrink-0" />
+            {categories.length > 0 && <FilterPill label="Category" value={filterCategory} onChange={withReset(setFilterCategory)} options={categories.map(c => ({ value: c.id, label: c.name }))} />}
+            {banks.length > 0 && <FilterPill label="Bank" value={filterBank} onChange={withReset(setFilterBank)} options={banks.map(b => ({ value: b.id, label: b.name }))} />}
+            {creditCards.length > 0 && <FilterPill label="Card" value={filterCard} onChange={withReset(setFilterCard)} options={creditCards.map(c => ({ value: c.id, label: c.name }))} />}
+            <FilterPill label="Marked" value={filterMarked} onChange={withReset(setFilterMarked)} options={MARKED_OPTIONS} />
+            {hasFilters && <Button size="sm" variant="light" onClick={clearFilters} className="shrink-0">Clear</Button>}
           </div>
-        </div>
-      )}
-
-      {/* Unsettled Card Balances */}
-      {unsettledByCard.length > 0 && (
-        <div className="mb-6">
-          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2">Unsettled Card Charges</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {unsettledByCard.map(cc => (
-              <div key={cc.id} className="bg-neutral-900 border border-yellow-500/20 rounded-xl px-4 py-3.5 flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm text-white font-medium">{cc.name}</p>
-                  <p className="text-xs text-neutral-500 mt-0.5">
-                    {cc.unsettledExpenses.length} charge{cc.unsettledExpenses.length !== 1 ? 's' : ''} · <span className="font-mono text-yellow-400">₱{fmt(cc.total)}</span>
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    if (confirm(`Mark all ${cc.name} charges as settled?\n\n₱${fmt(cc.total)} across ${cc.unsettledExpenses.length} expense${cc.unsettledExpenses.length !== 1 ? 's' : ''}`)) {
-                      handleSettleCard(cc.id)
-                    }
-                  }}
-                  disabled={settlingCard === cc.id}
-                  className="shrink-0 bg-accent-500/10 hover:bg-accent-500/20 disabled:opacity-50 text-accent-400 text-xs font-semibold rounded-lg px-3 py-1.5 border border-accent-500/20 transition-colors whitespace-nowrap"
-                >
-                  {settlingCard === cc.id ? 'Settling...' : 'Settle All'}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap mb-6">
-        <input type="search" value={search} onChange={e => { setSearch(e.target.value); setPage(0) }}
-          placeholder="Search expenses"
-          className="w-full sm:w-56 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-accent-500 transition-colors" />
-        <select value={filterMonth} onChange={e => { setFilterMonth(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
-          <option value="">All months</option>
-          {months.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
-        <select value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
-          <option value="">All categories</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <select value={filterBank} onChange={e => { setFilterBank(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
-          <option value="">All banks</option>
-          {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-        </select>
-        <select value={filterCard} onChange={e => { setFilterCard(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
-          <option value="">All credit cards</option>
-          {creditCards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <select value={filterMarked} onChange={e => { setFilterMarked(e.target.value); setPage(0) }}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
-          <option value="">All expenses</option>
-          <option value="marked">Marked only</option>
-          <option value="unmarked">Unmarked only</option>
-        </select>
-        {hasFilters && (
-          <button onClick={() => { setFilterMonth(''); setFilterCategory(''); setFilterBank(''); setFilterCard(''); setFilterMarked(''); setSearch('') }}
-            className="text-xs text-neutral-400 hover:text-white px-3 py-2 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-colors">
-            Clear filters
-          </button>
-        )}
-      </div>
-
-      {/* Summary */}
-      {filtered.length > 0 && (
-        <div className="flex items-center justify-between bg-neutral-900 border border-neutral-800 rounded-xl px-5 py-3.5 mb-4">
-          <span className="text-sm text-neutral-400">
-            {filtered.length} expense{filtered.length !== 1 ? 's' : ''}{hasFilters ? ' (filtered)' : ''}
-            {totalPages > 1 && ` · page ${page + 1} of ${totalPages}`}
-          </span>
-          <span className="text-sm font-semibold text-white font-mono">₱{fmt(totalFiltered)}</span>
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
-        {/* Desktop header */}
-        <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-5 pr-20 py-3 border-b border-neutral-800 text-xs font-medium text-neutral-500 uppercase tracking-wider">
-          <span>Expenses</span>
+          <p className="lg:ml-auto text-xs text-muted whitespace-nowrap">
+            {filtered.length} {filtered.length === 1 ? 'expense' : 'expenses'} · <span className="font-bold text-ink tnum">{fmtMoney(filteredTotal)}</span>
+          </p>
         </div>
 
         {loading ? (
-          <div className="px-5 py-12 text-center text-neutral-600 text-sm">Loading...</div>
+          <div className="space-y-2">{Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-14" />)}</div>
         ) : filtered.length === 0 ? (
-          <div className="px-5 py-12 text-center text-neutral-600 text-sm">
-            {expenses.length === 0 ? 'No expenses yet. Add your first one!' : 'No expenses match your filters.'}
-          </div>
+          expenses.length === 0
+            ? <EmptyState title="No expenses yet" body="Add your first expense to start tracking where your money goes."
+                action={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('expense')}>Add expense</Button>} />
+            : <EmptyState title={hasFilters ? 'No expenses match these filters' : `No expenses in ${monthName(month)}`}
+                action={hasFilters && <Button variant="light" size="sm" onClick={clearFilters}>Clear filters</Button>} />
         ) : (
-          paginated.map(expense => (
-            <div key={expense.id} className="border-b border-neutral-800/50 last:border-0 hover:bg-neutral-800/30 transition-colors group">
-              {/* Mobile card */}
-              <div className="sm:hidden flex items-center gap-3 px-4 py-3.5">
-                <div className="flex gap-1 shrink-0">
-                  <button onClick={() => setEditingExpense(expense)} className="text-neutral-500 hover:text-white transition-colors p-1">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-                    </svg>
-                  </button>
-                  <button onClick={() => handleDelete(expense.id)} disabled={deleting === expense.id}
-                    className="text-neutral-500 hover:text-red-400 transition-colors p-1 disabled:opacity-30">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                    </svg>
-                  </button>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">{expense.description}</p>
-                  <p className="text-xs text-neutral-500 mt-0.5">
-                    {expense.date}{expense.categories?.name ? ` · ${expense.categories.name}` : ''}
-                  </p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-sm font-mono text-white">₱{fmt(expense.amount)}</p>
-                  <div className="mt-1 flex items-center justify-end gap-1 flex-wrap">
-                    {expense.is_marked && <span className="text-xs px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400">Marked</span>}
-                    <CardStatusBadge creditCardId={expense.credit_cards?.id} isCardSettled={expense.is_card_settled} />
+          groupByDay(paginated, now).map(day => (
+            <DayGroup key={day.date} label={day.label} total={fmtMoney(day.total)}>
+              {day.rows.map(e => {
+                const status = cardStatus(e)
+                const catName = e.categories?.name || 'Uncategorised'
+                const account = e.credit_cards?.name || e.banks?.name || ''
+                return (
+                  <div key={e.id} className="group relative flex items-center gap-3 px-2 py-2 rounded-row hover:bg-sub transition-colors">
+                    <button type="button" className="md:hidden absolute inset-0 rounded-row" aria-label={`Edit ${e.description}`} onClick={() => setEditing(e)} />
+                    <CategoryAvatar name={catName} color={categoryColor(colors, e.category_id)} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold truncate">{e.description}</p>
+                      <p className="hidden md:block text-xs text-muted truncate">{catName}</p>
+                      <p className="md:hidden text-xs text-muted truncate">
+                        {account} · {status.short}{e.is_marked && <> · <StarIcon className="w-3 h-3 inline -mt-0.5 text-cyan-ink" /></>}
+                      </p>
+                    </div>
+                    <div className="hidden md:flex items-center gap-1.5 justify-end shrink-0">
+                      {e.banks?.name && <BankPill name={e.banks.name} />}
+                      <Badge tone={status.tone}>{status.label}</Badge>
+                      {e.is_marked && <Badge tone="mark">Marked</Badge>}
+                    </div>
+                    <span className="text-sm font-bold tnum w-28 text-right shrink-0">{fmtMoney(e.amount)}</span>
+                    <RowActions name={e.description} onEdit={() => setEditing(e)} onDelete={() => handleDelete(e.id)} deleting={deleting === e.id} />
                   </div>
-                </div>
-              </div>
-              {/* Desktop row */}
-              <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-5 py-3.5 items-center">
-                <div className="min-w-0">
-                  <p className="text-sm text-white truncate">{expense.description}</p>
-                  <p className="text-xs text-neutral-500 mt-0.5">{expense.date}</p>
-                </div>
-                <span className="text-sm font-mono text-white text-right whitespace-nowrap">₱{fmt(expense.amount)}</span>
-                <span className="text-xs text-neutral-400 whitespace-nowrap">
-                  {expense.categories?.name || <span className="text-neutral-600">—</span>}
-                </span>
-                <span className="text-xs text-neutral-400 whitespace-nowrap">
-                  {expense.banks?.name || <span className="text-neutral-600">—</span>}
-                </span>
-                <div className="flex items-center gap-2">
-                  {expense.is_marked && <span className="text-xs px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400">Marked</span>}
-                  <CardStatusBadge creditCardId={expense.credit_cards?.id} isCardSettled={expense.is_card_settled} />
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => setEditingExpense(expense)} className="text-neutral-500 hover:text-white transition-colors p-1">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-                      </svg>
-                    </button>
-                    <button onClick={() => handleDelete(expense.id)} disabled={deleting === expense.id}
-                      className="text-neutral-500 hover:text-red-400 transition-colors p-1 disabled:opacity-30">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+                )
+              })}
+            </DayGroup>
           ))
         )}
-      </div>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+      </Card>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <button
-            onClick={() => setPage(p => Math.max(0, p - 1))}
-            disabled={page === 0}
-            className="flex items-center gap-2 text-sm text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed px-3 py-2 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />
-            </svg>
-            Previous
-          </button>
-          <div className="flex items-center gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i)
-              .filter(i => i === 0 || i === totalPages - 1 || Math.abs(i - page) <= 1)
-              .reduce((acc, i, idx, arr) => {
-                if (idx > 0 && i - arr[idx - 1] > 1) acc.push('...')
-                acc.push(i)
-                return acc
-              }, [])
-              .map((item, idx) =>
-                item === '...' ? (
-                  <span key={`e-${idx}`} className="text-neutral-600 text-sm px-1">…</span>
-                ) : (
-                  <button key={item} onClick={() => setPage(item)}
-                    className={`w-8 h-8 rounded-lg text-sm transition-colors ${page === item
-                      ? 'bg-accent-500 text-neutral-950 font-semibold'
-                      : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
-                      }`}>
-                    {item + 1}
-                  </button>
-                )
-              )}
-          </div>
-          <button
-            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-            disabled={page >= totalPages - 1}
-            className="flex items-center gap-2 text-sm text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed px-3 py-2 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-colors"
-          >
-            Next
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-            </svg>
-          </button>
-        </div>
-      )}
-
-      {showAdd && (
-        <Modal title="Add Expense" onClose={() => setShowAdd(false)}>
-          <ExpenseForm banks={banks} creditCards={creditCards} categories={categories}
-            onSubmit={handleAdd} onClose={() => setShowAdd(false)} submitLabel="Save Expense" />
-        </Modal>
-      )}
-
-      {editingExpense && (
-        <Modal title="Edit Expense" onClose={() => setEditingExpense(null)}>
-          <ExpenseForm initialValues={editingExpense} banks={banks} creditCards={creditCards} categories={categories}
-            onSubmit={handleEdit} onClose={() => setEditingExpense(null)} submitLabel="Save Changes" />
+      {editing && (
+        <Modal title="Edit expense" onClose={() => setEditing(null)}>
+          <ExpenseForm initialValues={editing} banks={banks} creditCards={creditCards} categories={categories}
+            onSubmit={handleEdit} onClose={() => setEditing(null)} onDelete={() => handleDelete(editing.id)} submitLabel="Save changes" />
         </Modal>
       )}
     </div>

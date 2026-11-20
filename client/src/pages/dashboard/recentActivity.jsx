@@ -6,7 +6,8 @@ import { Card } from '../../components/ui/card'
 import { FilterPill } from '../../components/ui/filterPill'
 import { CategoryAvatar } from '../../components/ui/avatar'
 import { EmptyState } from '../../components/ui/emptyState'
-import { IncomeIcon, SearchIcon, TransferIcon } from '../../components/ui/icons'
+import { IncomeIcon, TransferIcon } from '../../components/ui/icons'
+import { SearchField } from '../../components/ui/searchField'
 
 const TYPES = [
   { value: 'expense', label: 'Expenses' },
@@ -38,11 +39,7 @@ export function RecentActivity({ data }) {
 
   const controls = (
     <div className="flex items-center gap-2">
-      <label className="hidden sm:flex items-center gap-1.5 bg-sub rounded-full h-8 px-3 w-44">
-        <SearchIcon className="w-3.5 h-3.5 text-faint shrink-0" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" aria-label="Search activity"
-          className="bg-transparent outline-none text-xs w-full placeholder:text-faint" />
-      </label>
+      <SearchField value={search} onChange={setSearch} placeholder="Search" label="Search activity" className="hidden sm:flex w-44" />
       <FilterPill label="All types" value={type} options={TYPES} onChange={setType} />
     </div>
   )

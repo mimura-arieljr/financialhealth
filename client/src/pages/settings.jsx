@@ -30,7 +30,7 @@ function TabBar({ active, onChange }) {
 
 function DeleteButton({ name, onClick, loading }) {
   return (
-    <IconButton label={`Delete ${name}`} size="w-8 h-8" variant="light" className="text-alert" onClick={onClick} disabled={loading}>
+    <IconButton label={`Delete ${name}`} size="w-8 h-8" variant="dangerLight" onClick={onClick} disabled={loading}>
       <TrashIcon className="w-3.5 h-3.5" />
     </IconButton>
   )

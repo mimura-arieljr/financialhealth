@@ -19,7 +19,7 @@ export function Badge({ tone = 'neutral', className = '', children }) {
   )
 }
 
-const DOTS = { good: 'bg-good', alert: 'bg-alert', warn: 'bg-warn', cyan: 'bg-cyan-stroke', ink: 'bg-ink' }
+const DOTS = { good: 'bg-good', alert: 'bg-alert', warn: 'bg-warn', cyan: 'bg-cyan-stroke', ink: 'bg-ink', neutral: 'bg-faint' }
 
 // White pill with a coloured dot; becomes a link when `to` is set
 export function Chip({ dot = 'ink', to, children }) {

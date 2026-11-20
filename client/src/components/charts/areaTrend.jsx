@@ -2,7 +2,7 @@ import { useId } from 'react'
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { fmtShort } from '../../lib/utils'
 import { ChartTooltip } from './chartTooltip'
-import { AXIS_TICK, GRID_STROKE, svgId } from './axes'
+import { AXIS_TICK, GRID_STROKE, svgId, gradientId, areaMargin } from './axes'
 
 export function AreaTrend({ data, xKey, series, height = 220, yFormat = fmtShort, endDots = true, endLabel = false }) {
   const id = svgId(useId())
@@ -23,10 +23,10 @@ export function AreaTrend({ data, xKey, series, height = 220, yFormat = fmtShort
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={data} margin={{ top: endLabel ? 34 : 10, right: 14, left: 0, bottom: 0 }}>
+      <AreaChart data={data} margin={areaMargin({ endLabel })}>
         <defs>
           {series.map(s => (
-            <linearGradient key={s.key} id={`${id}-${s.key}`} x1="0" y1="0" x2="0" y2="1">
+            <linearGradient key={s.key} id={gradientId(id, s.key)} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={s.fill} stopOpacity={0.32} />
               <stop offset="100%" stopColor={s.fill} stopOpacity={0} />
             </linearGradient>
@@ -38,7 +38,7 @@ export function AreaTrend({ data, xKey, series, height = 220, yFormat = fmtShort
         <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#9CA3AF', strokeDasharray: '3 3' }} />
         {series.map(s => (
           <Area key={s.key} type="monotone" dataKey={s.key} name={s.name}
-            stroke={s.stroke} strokeWidth={2} fill={`url(#${id}-${s.key})`}
+            stroke={s.stroke} strokeWidth={2} fill={`url(#${gradientId(id, s.key)})`}
             dot={endDots ? endDot(s.stroke) : false}
             activeDot={{ r: 4.5, stroke: '#fff', strokeWidth: 2, fill: s.stroke }}
             label={endLabel ? lastLabel : false}

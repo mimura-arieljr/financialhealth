@@ -49,7 +49,7 @@ export function Timeline({ items, now }) {
 
   return (
     <Card title={`${monthName(key)} at a glance`} subtitle="Monthly items on their due day; weekly items as a count" action={<Legend />}
-      className="hidden lg:block">
+      className="max-lg:hidden">
       <div className="relative h-40 mx-4 mt-2">
         {placed.map(p => (
           <div key={p.day} className="absolute top-0 h-[84px] -translate-x-1/2 flex flex-col items-center justify-end" style={{ left: pos(p.day), paddingBottom: p.level * 18 }}>

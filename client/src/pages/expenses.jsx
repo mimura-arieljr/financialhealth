@@ -274,7 +274,7 @@ export default function Expenses() {
           {unpaidTotal > 0 && <Chip dot="warn">{fmtPeso(unpaidTotal)} unpaid on cards</Chip>}
         </>}
         month={<MonthSwitcher value={month} onChange={withReset(setMonth)} options={monthOptions(expenses.map(e => e.date?.slice(0, 7)), now)} />}
-        actions={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('expense')} className="hidden lg:inline-flex">Add expense</Button>}
+        actions={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('expense')} className="max-lg:hidden">Add expense</Button>}
       />
 
       {topCards.length > 0 && (

@@ -15,11 +15,11 @@ const ROUND = 'w-10 h-10 rounded-full grid place-items-center shrink-0 transitio
 
 export function LogoPill() {
   return (
-    <Link to="/" className="inline-flex items-center gap-2 bg-card rounded-full pl-1.5 pr-4 h-11 font-bold text-[15px] tracking-tight shrink-0">
+    <Link to="/" className="inline-flex items-center gap-2 bg-card rounded-full pl-1.5 pr-4 max-[379px]:pr-1.5 h-11 font-bold text-[15px] tracking-tight shrink-0">
       <span className="w-8 h-8 rounded-full bg-hero grid place-items-center">
         <img src="/fundora_logo.svg" alt="" className="w-5 h-5" />
       </span>
-      Fundora
+      <span className="max-[379px]:sr-only">Fundora</span>
     </Link>
   )
 }

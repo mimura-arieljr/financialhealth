@@ -6,7 +6,7 @@ export function FormActions({ onClose, saving, submitLabel, onDelete }) {
   return (
     <div className="flex items-center gap-2 pt-2">
       {onDelete && (
-        <Button variant="light" onClick={onDelete} className="text-alert" icon={<TrashIcon />}>
+        <Button variant="dangerLight" onClick={onDelete} icon={<TrashIcon />}>
           Delete
         </Button>
       )}

@@ -84,7 +84,7 @@ export default function Transfers() {
         title="Transfers"
         headline={loading ? null : transfersHeadline({ total, count: inMonth.length, monthName: month ? monthName(month) : null })}
         month={<MonthSwitcher value={month} onChange={setMonth} options={monthOptions(transfers.map(t => t.date?.slice(0, 7)), now)} />}
-        actions={<Button icon={<TransferIcon />} onClick={() => openQuickAdd('transfer')} className="hidden lg:inline-flex">New transfer</Button>}
+        actions={<Button icon={<TransferIcon />} onClick={() => openQuickAdd('transfer')} className="max-lg:hidden">New transfer</Button>}
       />
 
       <Card>
@@ -105,7 +105,7 @@ export default function Transfers() {
               {day.rows.map(t => (
                 <div key={t.id} className="group relative flex items-center gap-3 px-2 py-2 rounded-row hover:bg-sub transition-colors">
                   <button type="button" className="md:hidden absolute inset-0 rounded-row" aria-label={`Edit transfer ${label(t)}`} onClick={() => setEditing(t)} />
-                  <div className="flex items-center gap-1.5 min-w-0 md:w-[300px] shrink-0">
+                  <div className="flex items-center gap-1.5 min-w-0 md:w-[300px] md:shrink-0">
                     <BankPill name={t.from_bank?.name || 'Unknown bank'} />
                     <TransferIcon className="w-3.5 h-3.5 text-cyan-ink shrink-0" />
                     <BankPill name={t.to_bank?.name || 'Unknown bank'} />

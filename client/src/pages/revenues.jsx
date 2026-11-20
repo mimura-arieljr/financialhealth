@@ -94,7 +94,7 @@ export default function Revenues() {
         })}
         chips={!loading && avg12 > 0 && <Chip dot="cyan">12-month avg {fmtPeso(avg12)}</Chip>}
         month={<MonthSwitcher value={month} onChange={setMonth} options={monthOptions(revenues.map(r => r.date?.slice(0, 7)), now)} />}
-        actions={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('revenue')} className="hidden lg:inline-flex">Add revenue</Button>}
+        actions={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('revenue')} className="max-lg:hidden">Add revenue</Button>}
       />
 
       <Card>

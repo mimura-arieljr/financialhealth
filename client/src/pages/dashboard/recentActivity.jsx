@@ -39,7 +39,7 @@ export function RecentActivity({ data }) {
 
   const controls = (
     <div className="flex items-center gap-2">
-      <SearchField value={search} onChange={setSearch} placeholder="Search" label="Search activity" className="hidden sm:flex w-44" />
+      <SearchField value={search} onChange={setSearch} placeholder="Search" label="Search activity" className="max-sm:hidden w-44" />
       <FilterPill label="All types" value={type} options={TYPES} onChange={setType} />
     </div>
   )
@@ -51,7 +51,14 @@ export function RecentActivity({ data }) {
           body={q || type ? undefined : 'Add an expense or revenue to see it here.'} className="py-8" />
       ) : (
         <>
-          <table className="hidden md:table w-full text-xs border-separate border-spacing-0">
+          <table className="hidden md:table table-fixed w-full text-xs border-separate border-spacing-0">
+            <colgroup>
+              <col />
+              <col className="w-[16%]" />
+              <col className="w-[18%]" />
+              <col className="w-16" />
+              <col className="w-32" />
+            </colgroup>
             <thead>
               <tr className="text-muted text-left">
                 <th className="font-medium bg-sub py-2 px-3 rounded-l-[10px]">Description</th>
@@ -68,13 +75,13 @@ export function RecentActivity({ data }) {
                     <div className="flex items-center gap-2.5 min-w-0">
                       <RowIcon row={r} colors={colors} />
                       <div className="min-w-0">
-                        <p className="font-semibold truncate max-w-[220px]">{r.description}</p>
-                        {r.note && <p className="text-faint truncate max-w-[220px]">{r.note}</p>}
+                        <p className="font-semibold truncate">{r.description}</p>
+                        {r.note && <p className="text-faint truncate">{r.note}</p>}
                       </div>
                     </div>
                   </td>
-                  <td className="py-2.5 px-3 border-b border-line text-[#374151]">{r.category}</td>
-                  <td className="py-2.5 px-3 border-b border-line text-[#374151] max-w-[160px] truncate">{r.account}</td>
+                  <td className="py-2.5 px-3 border-b border-line text-[#374151] truncate">{r.category}</td>
+                  <td className="py-2.5 px-3 border-b border-line text-[#374151] truncate">{r.account}</td>
                   <td className="py-2.5 px-3 border-b border-line text-muted whitespace-nowrap">{fmtDayMonth(r.date)}</td>
                   <td className="py-2.5 px-3 border-b border-line text-right font-bold whitespace-nowrap"><Amount row={r} /></td>
                 </tr>

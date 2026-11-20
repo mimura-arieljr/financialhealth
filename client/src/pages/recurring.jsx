@@ -52,7 +52,7 @@ function RecurringRow({ item, now, colors, onEdit, onDelete, onToggle, onPay, bu
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold truncate flex items-center gap-2">
           <span className="truncate">{item.description}</span>
-          {item.credit_cards?.name && <Badge className="hidden md:inline-flex">{item.credit_cards.name}</Badge>}
+          {item.credit_cards?.name && <Badge className="max-md:hidden">{item.credit_cards.name}</Badge>}
           <span className="md:hidden font-semibold text-muted tnum shrink-0">· {fmtPeso(item.amount)}</span>
         </p>
         <p className="text-xs text-muted truncate">{scheduleLine(item)}</p>

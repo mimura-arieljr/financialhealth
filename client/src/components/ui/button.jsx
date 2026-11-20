@@ -3,6 +3,8 @@ const VARIANTS = {
   light: 'bg-sub text-ink hover:bg-line',
   cyan: 'bg-cyan text-ink hover:brightness-95',
   white: 'bg-card text-ink hover:bg-sub',
+  dangerLight: 'bg-sub text-alert hover:bg-alert-bg',
+  dangerWhite: 'bg-card text-alert hover:bg-alert-bg',
 }
 const SIZES = {
   sm: 'h-8 px-3 text-xs gap-1.5',

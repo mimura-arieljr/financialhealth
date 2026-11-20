@@ -17,7 +17,7 @@ export function BarSeries({ data, xKey, bars, colorFor, average, averageLabel, h
           </pattern>
         </defs>
         <CartesianGrid vertical={false} stroke={GRID_STROKE} />
-        <XAxis dataKey={xKey} tickLine={false} axisLine={false} tick={AXIS_TICK} dy={6} interval={0} />
+        <XAxis dataKey={xKey} tickLine={false} axisLine={false} tick={AXIS_TICK} dy={6} interval="preserveStartEnd" minTickGap={4} />
         <YAxis tickFormatter={yFormat} tickLine={false} axisLine={false} tick={AXIS_TICK} width={56} />
         <Tooltip content={<ChartTooltip />} cursor={{ fill: '#F4F6F8' }} />
         {average !== undefined && average !== null && (

@@ -1,5 +1,18 @@
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { FieldInput } from '../components/ui/fieldInput'
+import { ErrorBanner } from '../components/ui/errorBanner'
+import { Button } from '../components/ui/button'
+
+// Decorative sample numbers on the hero panel; the visitor is not signed in yet
+function SampleCard({ label, value, className = '' }) {
+  return (
+    <div aria-hidden="true" className={`bg-card/90 rounded-[18px] px-4 py-3 shadow-[0_10px_30px_rgba(14,116,144,0.18)] ${className}`}>
+      <p className="text-xs text-muted font-medium">{label}</p>
+      <p className="text-xl font-bold tracking-tight tnum mt-0.5">{value}</p>
+    </div>
+  )
+}
 
 export default function Login() {
   const { signIn, signUp } = useAuth()
@@ -29,74 +42,47 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex items-center justify-center px-4">
-      {/* Background grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px]" />
-
-      <div className="relative w-full max-w-sm">
-        {/* Logo / Title */}
-        <div className="mb-10 text-center">
-          <img src="/fundora_main.svg" className="h-20 w-auto mx-auto" alt="Fundora" />
-          <p className="text-neutral-500 text-base mt-1">Personal finance, under control.</p>
+    <div className="min-h-dvh bg-canvas flex items-center justify-center lg:p-6">
+      <div className="w-full max-w-[980px] lg:bg-card lg:rounded-[28px] lg:p-3 lg:grid lg:grid-cols-[1.05fr_1fr] lg:shadow-[0_20px_60px_rgba(14,17,22,0.08)]">
+        {/* Hero panel */}
+        <div className="relative bg-hero overflow-hidden rounded-b-[28px] lg:rounded-[22px] px-6 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-8 lg:p-8 lg:min-h-[560px] flex flex-col">
+          <div className="inline-flex items-center gap-2 bg-card rounded-full pl-1.5 pr-4 h-11 font-bold text-[15px] tracking-tight self-start">
+            <span className="w-8 h-8 rounded-full bg-hero grid place-items-center"><img src="/fundora_logo.svg" alt="" className="w-5 h-5" /></span>
+            Fundora
+          </div>
+          <h1 className="text-[30px] lg:text-[40px] font-bold tracking-[-0.035em] leading-[1.05] mt-8 lg:mt-14 max-w-sm">
+            Personal finance, under control.
+          </h1>
+          <p className="text-[#155E75] text-sm lg:text-base mt-3 max-w-xs">Expenses, income, cards and bills in one calm place.</p>
+          <div className="hidden lg:block relative mt-auto h-40">
+            <SampleCard label="Spent this month" value="₱18,420" className="absolute left-0 bottom-14 w-52" />
+            <SampleCard label="Net this month" value={<span className="text-good">+₱23,580</span>} className="absolute left-36 bottom-0 w-52" />
+          </div>
         </div>
 
-        {/* Card */}
-        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8">
-          <h2 className="text-white font-medium mb-6">
-            {isSignUp ? 'Create your account' : 'Welcome back'}
-          </h2>
+        {/* Form */}
+        <div className="px-6 py-8 lg:px-12 lg:py-10 flex flex-col justify-center">
+          <h2 className="text-2xl font-bold tracking-tight">{isSignUp ? 'Create your account' : 'Welcome back'}</h2>
+          <p className="text-sm text-muted mt-1">{isSignUp ? 'Start tracking your money with Fundora.' : 'Sign in to your Fundora account.'}</p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-neutral-400 mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3.5 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/50 transition-colors"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-neutral-400 mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3.5 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/50 transition-colors"
-              />
-            </div>
-
-            {error && (
-              <p className="text-red-400 text-xs bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">{error}</p>
-            )}
-            {message && (
-              <p className="text-accent-400 text-xs bg-accent-400/10 border border-accent-400/20 rounded-lg px-3 py-2">{message}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-accent-500 hover:bg-accent-400 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-950 font-semibold text-sm rounded-lg py-2.5 transition-colors"
-            >
-              {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
-            </button>
+          <form onSubmit={handleSubmit} className="space-y-4 mt-7">
+            <FieldInput label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" required />
+            <FieldInput label="Password" type="password" value={password} onChange={setPassword} placeholder="••••••••" required />
+            <ErrorBanner message={error} />
+            {message && <p role="status" className="text-good text-xs font-medium bg-good-bg rounded-row px-3 py-2">{message}</p>}
+            <Button type="submit" disabled={loading} className="w-full h-11">
+              {loading ? 'Please wait...' : isSignUp ? 'Create account' : 'Sign in'}
+            </Button>
           </form>
 
-          <p className="text-center text-xs text-neutral-500 mt-6">
+          <p className="text-center text-sm text-muted mt-6">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button
-              onClick={() => { setIsSignUp(!isSignUp); setError(''); setMessage('') }}
-              className="text-accent-400 hover:text-accent-300 transition-colors"
-            >
+            <button type="button" onClick={() => { setIsSignUp(!isSignUp); setError(''); setMessage('') }}
+              className="font-semibold text-cyan-ink hover:underline">
               {isSignUp ? 'Sign in' : 'Sign up'}
             </button>
           </p>
-          <p className='text-center text-xs text-neutral-500 mt-2'>©Chock Mimura. All rights reserved.</p>
+          <p className="text-center text-xs text-faint mt-8">©Chock Mimura. All rights reserved.</p>
         </div>
       </div>
     </div>

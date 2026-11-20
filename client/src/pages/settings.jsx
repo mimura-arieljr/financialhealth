@@ -2,23 +2,25 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { invalidateTable } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
+import { fmtMoney } from '../lib/utils'
 import { ErrorBanner } from '../components/ui/errorBanner'
+import { PageHeader } from '../components/ui/pageHeader'
+import { Card } from '../components/ui/card'
+import { Button, IconButton } from '../components/ui/button'
+import { FieldInput } from '../components/ui/fieldInput'
+import { EmptyState } from '../components/ui/emptyState'
+import { Skeleton } from '../components/ui/skeleton'
+import { BankAvatar } from '../components/ui/avatar'
+import { PlusIcon, TrashIcon } from '../components/ui/icons'
 
 const TABS = ['Banks', 'Credit Cards', 'Categories']
 
 function TabBar({ active, onChange }) {
   return (
-    <div className="flex gap-1 bg-neutral-900 border border-neutral-800 rounded-xl p-1 w-full sm:w-fit">
+    <div role="tablist" className="inline-flex gap-0.5 bg-card rounded-full p-1.5 w-full sm:w-fit">
       {TABS.map(tab => (
-        <button
-          key={tab}
-          onClick={() => onChange(tab)}
-          className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            active === tab
-              ? 'bg-neutral-700 text-white'
-              : 'text-neutral-400 hover:text-white'
-          }`}
-        >
+        <button key={tab} type="button" role="tab" aria-selected={active === tab} onClick={() => onChange(tab)}
+          className={`flex-1 sm:flex-none px-4 h-9 rounded-full text-sm font-medium transition-colors ${active === tab ? 'bg-ink text-white' : 'text-[#4B5563] hover:text-ink hover:bg-sub'}`}>
           {tab}
         </button>
       ))}
@@ -26,23 +28,16 @@ function TabBar({ active, onChange }) {
   )
 }
 
-function EmptyState({ message }) {
-  return <div className="text-center py-12 text-neutral-600 text-sm">{message}</div>
+function DeleteButton({ name, onClick, loading }) {
+  return (
+    <IconButton label={`Delete ${name}`} size="w-8 h-8" variant="light" className="text-alert" onClick={onClick} disabled={loading}>
+      <TrashIcon className="w-3.5 h-3.5" />
+    </IconButton>
+  )
 }
 
-function DeleteButton({ onClick, loading }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={loading}
-      className="text-neutral-600 hover:text-red-400 transition-colors disabled:opacity-30 p-1"
-    >
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-          d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-      </svg>
-    </button>
-  )
+function ListSkeleton() {
+  return <div className="space-y-2">{Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-12" />)}</div>
 }
 
 function BanksTab({ userId }) {
@@ -88,193 +83,100 @@ function BanksTab({ userId }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
-        <h3 className="text-sm font-medium text-white mb-4">Add Bank</h3>
-        <form onSubmit={handleAdd} className="flex gap-3 items-end flex-wrap">
-          <div className="flex-1 min-w-36">
-            <label className="block text-xs text-neutral-400 mb-1.5">Bank Name</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. BPI"
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/50 transition-colors" />
-          </div>
-          <div className="flex-1 min-w-36">
-            <label className="block text-xs text-neutral-400 mb-1.5">Initial Balance (₱)</label>
-            <input type="number" value={initialBalance} onChange={e => setInitialBalance(e.target.value)}
-              placeholder="0.00" min="0" step="0.01"
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/50 transition-colors" />
-          </div>
-          <button type="submit" disabled={adding}
-            className="w-full sm:w-auto bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2 transition-colors">
-            {adding ? 'Adding...' : 'Add'}
-          </button>
+    <div className="space-y-4">
+      <Card title="Add bank">
+        <form onSubmit={handleAdd} className="grid sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+          <FieldInput label="Bank name" value={name} onChange={setName} placeholder="e.g. BPI" />
+          <FieldInput label="Initial balance (₱)" type="number" value={initialBalance} onChange={setInitialBalance} placeholder="0.00" min="0" step="0.01" />
+          <Button type="submit" disabled={adding} icon={<PlusIcon />} className="h-11">{adding ? 'Adding...' : 'Add'}</Button>
         </form>
         <ErrorBanner message={error} />
-      </div>
+      </Card>
 
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
-        <div className="px-5 py-3 border-b border-neutral-800 flex justify-between text-xs font-medium text-neutral-500 uppercase tracking-wider">
-          <span>Bank</span><span>Initial Balance</span>
-        </div>
-        {loading ? <div className="px-5 py-8 text-center text-neutral-600 text-sm">Loading...</div>
-          : banks.length === 0 ? <EmptyState message="No banks added yet." />
-          : banks.map(bank => (
-            <div key={bank.id} className="px-5 py-3.5 flex items-center justify-between border-b border-neutral-800/50 last:border-0 hover:bg-neutral-800/30 transition-colors">
-              <div className="flex items-center gap-3">
-                <DeleteButton onClick={() => handleDelete(bank.id)} loading={deleting === bank.id} />
-                <span className="text-sm text-white">{bank.name}</span>
-              </div>
-              <span className="text-sm text-neutral-300 font-mono">
-                ₱{Number(bank.initial_balance).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-          ))}
-      </div>
+      <Card title="Your banks" subtitle="Balances start from the initial balance you set here">
+        {loading ? <ListSkeleton />
+          : banks.length === 0 ? <EmptyState title="No banks added yet" body="Add the banks and e-wallets you pay from." />
+          : (
+            <ul className="divide-y divide-line">
+              {banks.map(bank => (
+                <li key={bank.id} className="flex items-center gap-3 py-2.5">
+                  <BankAvatar name={bank.name} size="sm" />
+                  <span className="text-sm font-semibold flex-1 min-w-0 truncate">{bank.name}</span>
+                  <span className="text-sm text-muted tnum">{fmtMoney(bank.initial_balance)}</span>
+                  <DeleteButton name={bank.name} onClick={() => handleDelete(bank.id)} loading={deleting === bank.id} />
+                </li>
+              ))}
+            </ul>
+          )}
+      </Card>
     </div>
   )
 }
 
-function CreditCardsTab({ userId }) {
-  const [cards, setCards] = useState([])
+// Credit cards and categories share the same name-only list
+function NameListTab({ userId, table, singular, plural, placeholder, emptyBody }) {
+  const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(null)
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [adding, setAdding] = useState(false)
-
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
-    supabase.from('credit_cards').select('*').eq('user_id', userId).order('name')
+    supabase.from(table).select('*').eq('user_id', userId).order('name')
       .then(({ data, error }) => {
         if (cancelled) return
-        if (!error) setCards(data)
+        if (!error) setRows(data)
         setLoading(false)
       })
     return () => { cancelled = true }
-  }, [userId, refreshKey])
+  }, [userId, table, refreshKey])
 
   const handleAdd = async (e) => {
     e.preventDefault()
     setError('')
     if (!name.trim()) return
     setAdding(true)
-    const { error } = await supabase.from('credit_cards').insert({ user_id: userId, name: name.trim() })
+    const { error } = await supabase.from(table).insert({ user_id: userId, name: name.trim() })
     if (error) setError(error.message)
-    else { setName(''); setRefreshKey(k => k + 1); invalidateTable('credit_cards', userId) }
+    else { setName(''); setRefreshKey(k => k + 1); invalidateTable(table, userId) }
     setAdding(false)
   }
 
   const handleDelete = async (id) => {
     setDeleting(id)
-    const { error } = await supabase.from('credit_cards').delete().eq('id', id)
+    const { error } = await supabase.from(table).delete().eq('id', id)
     if (error) setError(error.message)
-    else { setRefreshKey(k => k + 1); invalidateTable('credit_cards', userId) }
+    else { setRefreshKey(k => k + 1); invalidateTable(table, userId) }
     setDeleting(null)
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
-        <h3 className="text-sm font-medium text-white mb-4">Add Credit Card</h3>
-        <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3 sm:items-end">
-          <div className="flex-1">
-            <label className="block text-xs text-neutral-400 mb-1.5">Card / Issuer Name</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Metrobank"
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/50 transition-colors" />
-          </div>
-          <button type="submit" disabled={adding}
-            className="w-full sm:w-auto bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2 transition-colors">
-            {adding ? 'Adding...' : 'Add'}
-          </button>
+    <div className="space-y-4">
+      <Card title={`Add ${singular}`}>
+        <form onSubmit={handleAdd} className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
+          <FieldInput label={`${singular.charAt(0).toUpperCase()}${singular.slice(1)} name`} value={name} onChange={setName} placeholder={placeholder} />
+          <Button type="submit" disabled={adding} icon={<PlusIcon />} className="h-11">{adding ? 'Adding...' : 'Add'}</Button>
         </form>
         <ErrorBanner message={error} />
-      </div>
+      </Card>
 
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
-        <div className="px-5 py-3 border-b border-neutral-800 text-xs font-medium text-neutral-500 uppercase tracking-wider">Card</div>
-        {loading ? <div className="px-5 py-8 text-center text-neutral-600 text-sm">Loading...</div>
-          : cards.length === 0 ? <EmptyState message="No credit cards added yet." />
-          : cards.map(card => (
-            <div key={card.id} className="px-5 py-3.5 flex items-center gap-3 border-b border-neutral-800/50 last:border-0 hover:bg-neutral-800/30 transition-colors">
-              <DeleteButton onClick={() => handleDelete(card.id)} loading={deleting === card.id} />
-              <span className="text-sm text-white">{card.name}</span>
-            </div>
-          ))}
-      </div>
-    </div>
-  )
-}
-
-function CategoriesTab({ userId }) {
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [deleting, setDeleting] = useState(null)
-  const [name, setName] = useState('')
-  const [error, setError] = useState('')
-  const [adding, setAdding] = useState(false)
-
-  const [refreshKey, setRefreshKey] = useState(0)
-
-  useEffect(() => {
-    let cancelled = false
-    supabase.from('categories').select('*').eq('user_id', userId).order('name')
-      .then(({ data, error }) => {
-        if (cancelled) return
-        if (!error) setCategories(data)
-        setLoading(false)
-      })
-    return () => { cancelled = true }
-  }, [userId, refreshKey])
-
-  const handleAdd = async (e) => {
-    e.preventDefault()
-    setError('')
-    if (!name.trim()) return
-    setAdding(true)
-    const { error } = await supabase.from('categories').insert({ user_id: userId, name: name.trim() })
-    if (error) setError(error.message)
-    else { setName(''); setRefreshKey(k => k + 1); invalidateTable('categories', userId) }
-    setAdding(false)
-  }
-
-  const handleDelete = async (id) => {
-    setDeleting(id)
-    const { error } = await supabase.from('categories').delete().eq('id', id)
-    if (error) setError(error.message)
-    else { setRefreshKey(k => k + 1); invalidateTable('categories', userId) }
-    setDeleting(null)
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
-        <h3 className="text-sm font-medium text-white mb-4">Add Category</h3>
-        <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3 sm:items-end">
-          <div className="flex-1">
-            <label className="block text-xs text-neutral-400 mb-1.5">Category Name</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Travel"
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/50 transition-colors" />
-          </div>
-          <button type="submit" disabled={adding}
-            className="w-full sm:w-auto bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2 transition-colors">
-            {adding ? 'Adding...' : 'Add'}
-          </button>
-        </form>
-        <ErrorBanner message={error} />
-      </div>
-
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
-        <div className="px-5 py-3 border-b border-neutral-800 text-xs font-medium text-neutral-500 uppercase tracking-wider">Category</div>
-        {loading ? <div className="px-5 py-8 text-center text-neutral-600 text-sm">Loading...</div>
-          : categories.length === 0 ? <EmptyState message="No categories added yet." />
-          : categories.map(cat => (
-            <div key={cat.id} className="px-5 py-3.5 flex items-center gap-3 border-b border-neutral-800/50 last:border-0 hover:bg-neutral-800/30 transition-colors">
-              <DeleteButton onClick={() => handleDelete(cat.id)} loading={deleting === cat.id} />
-              <span className="text-sm text-white">{cat.name}</span>
-            </div>
-          ))}
-      </div>
+      <Card title={`Your ${plural}`}>
+        {loading ? <ListSkeleton />
+          : rows.length === 0 ? <EmptyState title={`No ${plural} added yet`} body={emptyBody} />
+          : (
+            <ul className="divide-y divide-line">
+              {rows.map(row => (
+                <li key={row.id} className="flex items-center gap-3 py-2.5">
+                  <span className="text-sm font-semibold flex-1 min-w-0 truncate">{row.name}</span>
+                  <DeleteButton name={row.name} onClick={() => handleDelete(row.id)} loading={deleting === row.id} />
+                </li>
+              ))}
+            </ul>
+          )}
+      </Card>
     </div>
   )
 }
@@ -286,17 +188,20 @@ export default function Settings() {
   if (loading || !user) return null
 
   return (
-    <div className="p-4 sm:p-8 max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-white">Settings</h1>
-        <p className="text-neutral-500 text-sm mt-1">Manage your banks, credit cards, and categories.</p>
-      </div>
-      <div className="mb-6">
+    <div className="max-w-2xl">
+      <PageHeader title="Settings" subtitle="Manage your banks, credit cards, and categories." />
+      <div className="mb-4">
         <TabBar active={activeTab} onChange={setActiveTab} />
       </div>
       {activeTab === 'Banks' && <BanksTab userId={user.id} />}
-      {activeTab === 'Credit Cards' && <CreditCardsTab userId={user.id} />}
-      {activeTab === 'Categories' && <CategoriesTab userId={user.id} />}
+      {activeTab === 'Credit Cards' && (
+        <NameListTab key="credit_cards" userId={user.id} table="credit_cards" singular="credit card" plural="credit cards"
+          placeholder="e.g. BPI Amore" emptyBody="Add a card to track charges you haven't paid off yet." />
+      )}
+      {activeTab === 'Categories' && (
+        <NameListTab key="categories" userId={user.id} table="categories" singular="category" plural="categories"
+          placeholder="e.g. Food" emptyBody="Categories group your spending on the dashboard." />
+      )}
     </div>
   )
 }

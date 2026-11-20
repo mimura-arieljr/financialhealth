@@ -26,11 +26,6 @@
   --radius-card: 22px;
   --radius-panel: 16px;
   --radius-row: 14px;
-
-  /* Old accent; removed once every page is on the new kit */
-  --color-accent-300: #99ffff;
-  --color-accent-400: #66ffff;
-  --color-accent-500: #00ffff;
 }
 
 html,

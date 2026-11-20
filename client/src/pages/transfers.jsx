@@ -1,66 +1,67 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
+import { useQuickAdd } from '../hooks/useQuickAdd'
+import { transfersHeadline } from '../lib/headlines'
+import { groupByDay } from '../lib/grouping'
+import { fmtMoney, monthKey, monthName, monthOptions } from '../lib/utils'
 import { Modal } from '../components/ui/modal'
+import { Card } from '../components/ui/card'
+import { Button } from '../components/ui/button'
+import { PageHeader } from '../components/ui/pageHeader'
+import { MonthSwitcher } from '../components/ui/monthSwitcher'
+import { DayGroup } from '../components/ui/dayGroup'
+import { EmptyState } from '../components/ui/emptyState'
+import { Skeleton } from '../components/ui/skeleton'
+import { RowActions } from '../components/ui/rowActions'
+import { BankPill } from '../components/ui/avatar'
+import { TransferIcon } from '../components/ui/icons'
 import { TransferForm } from '../components/forms/transferForm'
-import { fmt } from '../lib/utils'
 
 export default function Transfers() {
   const { user } = useAuth()
+  const userId = user?.id
+  const { openQuickAdd, dataVersion, notifySaved } = useQuickAdd()
+  const now = useMemo(() => new Date(), [])
+
   const [banks, setBanks] = useState([])
   const [transfers, setTransfers] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [deleting, setDeleting] = useState(null)
-  const [filterMonth, setFilterMonth] = useState('')
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [month, setMonth] = useState(monthKey(now))
 
   useEffect(() => {
-    if (!user?.id) return
-    fetchCached('banks', user.id, 'id, name', 'name')
-      .then(({ data }) => { if (data) setBanks(data) })
-  }, [user?.id])
+    if (!userId) return
+    fetchCached('banks', userId, 'id, name', 'name').then(({ data, error }) => { if (!error) setBanks(data) })
+  }, [userId, dataVersion])
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!userId) return
     let cancelled = false
-
-    const fetchTransfers = async () => {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('transfers')
-        .select(`id, amount, date, note, created_at,
-          from_bank_id, to_bank_id,
-          from_bank:banks!transfers_from_bank_id_fkey(id, name),
-          to_bank:banks!transfers_to_bank_id_fkey(id, name)`)
-        .eq('user_id', user.id)
-        .order('date', { ascending: false })
-        .order('created_at', { ascending: false })
-
-      if (cancelled) return
-      if (!error && data) setTransfers(data)
-      setLoading(false)
-    }
-
-    fetchTransfers()
+    supabase
+      .from('transfers')
+      .select(`id, amount, date, note, created_at,
+        from_bank_id, to_bank_id,
+        from_bank:banks!transfers_from_bank_id_fkey(id, name),
+        to_bank:banks!transfers_to_bank_id_fkey(id, name)`)
+      .eq('user_id', userId)
+      .order('date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (!error && data) setTransfers(data)
+        setLoading(false)
+      })
     return () => { cancelled = true }
-  }, [user?.id, refreshKey])
-
-  const handleAdd = async (values) => {
-    const { error } = await supabase.from('transfers').insert({ user_id: user.id, ...values })
-    if (error) return error.message
-    setRefreshKey(k => k + 1)
-    setShowAdd(false)
-    return null
-  }
+  }, [userId, dataVersion])
 
   const handleEdit = async (values) => {
     const { error } = await supabase.from('transfers').update(values).eq('id', editing.id)
     if (error) return error.message
-    setRefreshKey(k => k + 1)
     setEditing(null)
+    notifySaved()
     return null
   }
 
@@ -69,121 +70,60 @@ export default function Transfers() {
     setDeleting(id)
     await supabase.from('transfers').delete().eq('id', id)
     setDeleting(null)
-    setRefreshKey(k => k + 1)
+    setEditing(null)
+    notifySaved()
   }
 
-  const months = [...new Set(transfers.map(t => t.date?.slice(0, 7)).filter(Boolean))].sort().reverse()
-  const filtered = filterMonth ? transfers.filter(t => t.date?.slice(0, 7) === filterMonth) : transfers
-  const totalFiltered = filtered.reduce((sum, t) => sum + Number(t.amount), 0)
+  const inMonth = month ? transfers.filter(t => t.date?.slice(0, 7) === month) : transfers
+  const total = inMonth.reduce((s, t) => s + Number(t.amount), 0)
+  const label = (t) => `${t.from_bank?.name || 'Unknown bank'} to ${t.to_bank?.name || 'Unknown bank'}`
 
   return (
-    <div className="p-4 sm:p-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Transfers</h1>
-          <p className="text-neutral-500 text-sm mt-1">Move funds between your banks.</p>
-        </div>
-        <button onClick={() => setShowAdd(true)}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto bg-accent-500 hover:bg-accent-400 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          New Transfer
-        </button>
-      </div>
+    <div>
+      <PageHeader
+        title="Transfers"
+        headline={loading ? null : transfersHeadline({ total, count: inMonth.length, monthName: month ? monthName(month) : null })}
+        month={<MonthSwitcher value={month} onChange={setMonth} options={monthOptions(transfers.map(t => t.date?.slice(0, 7)), now)} />}
+        actions={<Button icon={<TransferIcon />} onClick={() => openQuickAdd('transfer')} className="hidden lg:inline-flex">New transfer</Button>}
+      />
 
-      {/* Filter */}
-      <div className="flex gap-3 flex-wrap mb-6">
-        <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
-          <option value="">All months</option>
-          {months.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
-        {filterMonth && (
-          <button onClick={() => setFilterMonth('')}
-            className="text-xs text-neutral-400 hover:text-white px-3 py-2 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-colors">
-            Clear
-          </button>
-        )}
-      </div>
+      <Card>
+        <p className="text-xs text-muted mb-4 text-right">
+          {inMonth.length} {inMonth.length === 1 ? 'transfer' : 'transfers'} · <span className="font-bold text-ink tnum">{fmtMoney(total)}</span>
+        </p>
 
-      {/* Summary */}
-      {filtered.length > 0 && (
-        <div className="flex items-center justify-between bg-neutral-900 border border-neutral-800 rounded-xl px-5 py-3.5 mb-4">
-          <span className="text-sm text-neutral-400">
-            {filtered.length} transfer{filtered.length !== 1 ? 's' : ''}{filterMonth ? ' (filtered)' : ''}
-          </span>
-          <span className="text-sm font-semibold text-white font-mono">₱{fmt(totalFiltered)}</span>
-        </div>
-      )}
-
-      {/* List */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
         {loading ? (
-          <div className="px-5 py-12 text-center text-neutral-600 text-sm">Loading...</div>
-        ) : filtered.length === 0 ? (
-          <div className="px-5 py-12 text-center text-neutral-600 text-sm">
-            {transfers.length === 0 ? 'No transfers yet.' : 'No transfers this month.'}
-          </div>
+          <div className="space-y-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14" />)}</div>
+        ) : inMonth.length === 0 ? (
+          transfers.length === 0
+            ? <EmptyState title="No transfers yet" body="Moving money between your banks keeps each balance right."
+                action={<Button icon={<TransferIcon />} onClick={() => openQuickAdd('transfer')}>New transfer</Button>} />
+            : <EmptyState title={`No transfers in ${monthName(month)}`} />
         ) : (
-          filtered.map(transfer => (
-            <div key={transfer.id}
-              className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 border-b border-neutral-800/50 last:border-0 hover:bg-neutral-800/30 transition-colors group">
-
-              {/* Arrow icon */}
-              <div className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </div>
-
-              {/* Banks */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 text-sm text-white">
-                  <span className="truncate font-medium">{transfer.from_bank?.name}</span>
-                  <svg className="w-3 h-3 text-neutral-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                  <span className="truncate font-medium">{transfer.to_bank?.name}</span>
+          groupByDay(inMonth, now).map(day => (
+            <DayGroup key={day.date} label={day.label} total={fmtMoney(day.total)}>
+              {day.rows.map(t => (
+                <div key={t.id} className="group relative flex items-center gap-3 px-2 py-2 rounded-row hover:bg-sub transition-colors">
+                  <button type="button" className="md:hidden absolute inset-0 rounded-row" aria-label={`Edit transfer ${label(t)}`} onClick={() => setEditing(t)} />
+                  <div className="flex items-center gap-1.5 min-w-0 md:w-[300px] shrink-0">
+                    <BankPill name={t.from_bank?.name || 'Unknown bank'} />
+                    <TransferIcon className="w-3.5 h-3.5 text-cyan-ink shrink-0" />
+                    <BankPill name={t.to_bank?.name || 'Unknown bank'} />
+                  </div>
+                  <p className={`hidden md:block flex-1 min-w-0 text-sm truncate ${t.note ? '' : 'text-faint'}`}>{t.note || 'No note'}</p>
+                  <span className="ml-auto md:ml-0 text-sm font-bold tnum w-28 text-right shrink-0">{fmtMoney(t.amount)}</span>
+                  <RowActions name={`transfer ${label(t)}`} onEdit={() => setEditing(t)} onDelete={() => handleDelete(t.id)} deleting={deleting === t.id} />
                 </div>
-                <p className="text-xs text-neutral-500 mt-0.5">
-                  {transfer.date}{transfer.note ? ` · ${transfer.note}` : ''}
-                </p>
-              </div>
-
-              {/* Amount + actions */}
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-sm font-mono text-white">₱{fmt(transfer.amount)}</span>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => setEditing(transfer)}
-                    className="text-neutral-500 hover:text-white transition-colors p-1">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-                    </svg>
-                  </button>
-                  <button onClick={() => handleDelete(transfer.id)} disabled={deleting === transfer.id}
-                    className="text-neutral-500 hover:text-red-400 transition-colors p-1 disabled:opacity-30">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
+              ))}
+            </DayGroup>
           ))
         )}
-      </div>
-
-      {showAdd && (
-        <Modal title="New Transfer" onClose={() => setShowAdd(false)}>
-          <TransferForm banks={banks} onSubmit={handleAdd} onClose={() => setShowAdd(false)} submitLabel="Transfer" />
-        </Modal>
-      )}
+      </Card>
 
       {editing && (
-        <Modal title="Edit Transfer" onClose={() => setEditing(null)}>
-          <TransferForm initialValues={editing} banks={banks}
-            onSubmit={handleEdit} onClose={() => setEditing(null)} submitLabel="Save Changes" />
+        <Modal title="Edit transfer" onClose={() => setEditing(null)}>
+          <TransferForm initialValues={editing} banks={banks} onSubmit={handleEdit} onClose={() => setEditing(null)}
+            onDelete={() => handleDelete(editing.id)} submitLabel="Save changes" />
         </Modal>
       )}
     </div>

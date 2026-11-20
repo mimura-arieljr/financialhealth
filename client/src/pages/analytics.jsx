@@ -2,274 +2,169 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
-import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, Cell, ReferenceLine, Legend
-} from 'recharts'
-import { fmt, fmtShort, getLast12Months, getCurrentYear, getMonthsOfYear } from '../lib/utils'
+import { useQuickAdd } from '../hooks/useQuickAdd'
+import { analyticsHeadline } from '../lib/headlines'
+import { fmtPeso, fmtShort, getLast12Months, getCurrentYear, getMonthsOfYear, monthKey, monthName } from '../lib/utils'
+import { Card } from '../components/ui/card'
+import { Chip } from '../components/ui/pill'
+import { PageHeader } from '../components/ui/pageHeader'
+import { EmptyState } from '../components/ui/emptyState'
+import { Skeleton } from '../components/ui/skeleton'
+import { Ring } from '../components/charts/ring'
+import { AreaTrend } from '../components/charts/areaTrend'
+import { BarSeries } from '../components/charts/barSeries'
+import { ChartLegend } from '../components/charts/chartTooltip'
 
-function SectionCard({ title, subtitle, children, loading }) {
-  return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
-      <div className="mb-4">
-        <h2 className="text-sm font-medium text-white">{title}</h2>
-        {subtitle && <p className="text-xs text-neutral-500 mt-0.5">{subtitle}</p>}
-      </div>
-      {loading ? (
-        <div className="h-48 flex items-center justify-center text-neutral-600 text-sm">Loading...</div>
-      ) : children}
-    </div>
-  )
-}
+const INK = '#0E1116'
+const CYAN = '#00E5F2'
+const BELOW_AVG = '#E5E7EB'
 
-function ChartTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-xs shadow-xl">
-      <p className="text-neutral-400 mb-1">{label}</p>
-      {payload.map((p, i) => (
-        <p key={i} style={{ color: p.color }} className="font-mono">
-          {p.name}: {p.value < 0 ? '-' : ''}₱{fmt(Math.abs(p.value))}
-        </p>
-      ))}
-    </div>
-  )
-}
-
-// ── Main Component ─────────────────────────────────────────────────────────
+const sumKey = (rows, key) => rows.filter(r => r.date?.slice(0, 7) === key).reduce((s, r) => s + Number(r.amount), 0)
 
 export default function Analytics() {
   const { user } = useAuth()
+  const userId = user?.id
+  const { dataVersion } = useQuickAdd()
   const [loading, setLoading] = useState(true)
-
   const [expenses, setExpenses] = useState([])
   const [revenues, setRevenues] = useState([])
   const [banks, setBanks] = useState([])
 
   useEffect(() => {
-    if (!user?.id) return
-    const fetchAll = async () => {
-      setLoading(true)
-      const [expRes, revRes, bankRes] = await Promise.all([
-        supabase.from('expenses').select('id, amount, date, category_id, bank_id, credit_card_id, is_card_settled').eq('user_id', user.id),
-        supabase.from('revenues').select('id, amount, date, bank_id').eq('user_id', user.id),
-        fetchCached('banks', user.id, 'id, name, initial_balance'),
-      ])
+    if (!userId) return
+    Promise.all([
+      supabase.from('expenses').select('id, amount, date, category_id, bank_id, credit_card_id, is_card_settled').eq('user_id', userId),
+      supabase.from('revenues').select('id, amount, date, bank_id').eq('user_id', userId),
+      fetchCached('banks', userId, 'id, name, initial_balance'),
+    ]).then(([expRes, revRes, bankRes]) => {
       if (!expRes.error) setExpenses(expRes.data)
       if (!revRes.error) setRevenues(revRes.data)
       if (!bankRes.error) setBanks(bankRes.data)
       setLoading(false)
-    }
-    fetchAll()
-  }, [user?.id])
+    })
+  }, [userId, dataVersion])
 
-  // ── 1. Savings Rate % (current month) ─────────────────────────────────
-  const currentMonth = new Date().toISOString().slice(0, 7)
-  const monthRevenue = revenues
-    .filter(r => r.date?.slice(0, 7) === currentMonth)
-    .reduce((s, r) => s + Number(r.amount), 0)
-  const monthExpenses = expenses
-    .filter(e => e.date?.slice(0, 7) === currentMonth)
-    .reduce((s, e) => s + Number(e.amount), 0)
-  const savingsRate = monthRevenue > 0
-    ? Math.round(((monthRevenue - monthExpenses) / monthRevenue) * 100)
-    : null
-  const savingsRateColor = savingsRate === null ? 'text-neutral-500'
-    : savingsRate >= 20 ? 'text-emerald-400'
-      : savingsRate >= 0 ? 'text-yellow-400'
-        : 'text-red-400'
-  const savingsRateLabel = savingsRate === null ? 'No income data this month'
-    : savingsRate >= 20 ? 'Healthy — above 20%'
-      : savingsRate >= 0 ? 'Below recommended 20%'
+  // 1. Savings rate, current month (local time key)
+  const currentMonth = monthKey(new Date())
+  const monthRevenue = sumKey(revenues, currentMonth)
+  const monthExpenses = sumKey(expenses, currentMonth)
+  const savingsRate = monthRevenue > 0 ? Math.round(((monthRevenue - monthExpenses) / monthRevenue) * 100) : null
+  const savingsLabel = savingsRate === null ? 'No income this month'
+    : savingsRate >= 20 ? 'Healthy'
+      : savingsRate >= 0 ? 'Below target'
         : 'Spending exceeds income'
 
-  // ── 2. Monthly Net Worth Trend (last 12 months) ────────────────────────
+  // 2. Net worth, last 12 months (same maths as before)
   const last12 = getLast12Months()
+  const initialTotal = banks.reduce((s, b) => s + Number(b.initial_balance), 0)
   const netWorthData = last12.map(({ key, label }) => {
-    // Sum all revenues up to end of this month
-    const totalRev = revenues
-      .filter(r => r.date?.slice(0, 7) <= key)
-      .reduce((s, r) => s + Number(r.amount), 0)
-    // Sum all settled expenses up to end of this month
+    const totalRev = revenues.filter(r => r.date?.slice(0, 7) <= key).reduce((s, r) => s + Number(r.amount), 0)
     const totalExp = expenses
       .filter(e => e.date?.slice(0, 7) <= key && (e.credit_card_id === null || e.is_card_settled === true))
       .reduce((s, e) => s + Number(e.amount), 0)
-    const initialTotal = banks.reduce((s, b) => s + Number(b.initial_balance), 0)
     return { month: label, 'Net Worth': initialTotal + totalRev - totalExp }
   })
+  const netWorthFlat = netWorthData.every(d => d['Net Worth'] === netWorthData[0]['Net Worth'])
+  const netWorthChange = netWorthData[netWorthData.length - 1]['Net Worth'] - netWorthData[0]['Net Worth']
 
-  // ── 3. Projected Year-End Savings ─────────────────────────────────────
+  // 3. Projected year-end savings
   const year = getCurrentYear()
   const yearMonths = getMonthsOfYear(year)
-  const nowMonthIdx = new Date().getMonth() // 0-based
-
-  // Compute actual net per month this year
-  const actualNets = yearMonths.map(({ key }) => {
-    const rev = revenues.filter(r => r.date?.slice(0, 7) === key).reduce((s, r) => s + Number(r.amount), 0)
-    const exp = expenses.filter(e => e.date?.slice(0, 7) === key).reduce((s, e) => s + Number(e.amount), 0)
-    return rev - exp
-  })
-
-  // Average net of past months (up to but not including current)
-  const pastNets = actualNets.slice(0, nowMonthIdx).filter((_, i) => {
-    const rev = revenues.filter(r => r.date?.slice(0, 7) === yearMonths[i].key).reduce((s, r) => s + Number(r.amount), 0)
-    return rev > 0 // only months with income
-  })
-  const avgMonthlyNet = pastNets.length > 0
-    ? pastNets.reduce((s, n) => s + n, 0) / pastNets.length
-    : null
-
-  const projectionData = yearMonths.map(({ label }, i) => {
-    const isActual = i <= nowMonthIdx
-    const actual = isActual ? actualNets[i] : null
-    const projected = !isActual && avgMonthlyNet !== null ? avgMonthlyNet : null
-    return { month: label, Actual: actual, Projected: projected }
-  })
-
-  const projectedYearEnd = avgMonthlyNet !== null
-    ? actualNets.slice(0, nowMonthIdx + 1).reduce((s, n) => s + n, 0) +
-    avgMonthlyNet * (11 - nowMonthIdx)
-    : null
-
-  // ── 4. Income Consistency (last 12 months) ────────────────────────────
-  const avgMonthlyRevenue = last12.reduce((s, { key }) => {
-    return s + revenues.filter(r => r.date?.slice(0, 7) === key).reduce((ss, r) => ss + Number(r.amount), 0)
-  }, 0) / 12
-
-  const incomeData = last12.map(({ key, label }) => ({
+  const nowMonthIdx = new Date().getMonth()
+  const actualNets = yearMonths.map(({ key }) => sumKey(revenues, key) - sumKey(expenses, key))
+  // Average net of past months that had income
+  const pastNets = actualNets.slice(0, nowMonthIdx).filter((_, i) => sumKey(revenues, yearMonths[i].key) > 0)
+  const avgMonthlyNet = pastNets.length > 0 ? pastNets.reduce((s, n) => s + n, 0) / pastNets.length : null
+  const projectionData = yearMonths.map(({ label }, i) => ({
     month: label,
-    Revenue: revenues.filter(r => r.date?.slice(0, 7) === key).reduce((s, r) => s + Number(r.amount), 0)
+    Actual: i <= nowMonthIdx ? actualNets[i] : null,
+    Projected: i > nowMonthIdx && avgMonthlyNet !== null ? avgMonthlyNet : null,
+    isCurrent: i === nowMonthIdx,
   }))
+  const projectedYearEnd = avgMonthlyNet !== null
+    ? actualNets.slice(0, nowMonthIdx + 1).reduce((s, n) => s + n, 0) + avgMonthlyNet * (11 - nowMonthIdx)
+    : null
+
+  // 4. Income consistency, last 12 months
+  const incomeData = last12.map(({ key, label }) => ({ month: label, Revenue: sumKey(revenues, key) }))
+  const avgMonthlyRevenue = incomeData.reduce((s, d) => s + d.Revenue, 0) / 12
+
+  if (loading) {
+    return (
+      <div>
+        <Skeleton className="h-10 w-48 mb-3" />
+        <Skeleton className="h-5 w-96 max-w-full mb-6" />
+        <div className="grid lg:grid-cols-2 gap-4"><Skeleton className="h-72 rounded-card" /><Skeleton className="h-72 rounded-card" /></div>
+      </div>
+    )
+  }
 
   return (
-    <div className="p-4 sm:p-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-white">Analytics</h1>
-        <p className="text-neutral-500 text-sm mt-1">Financial insights from your data.</p>
-      </div>
+    <div>
+      <PageHeader
+        title="Analytics"
+        headline={analyticsHeadline({ savingsRate, monthName: monthName(currentMonth) })}
+        chips={<>
+          {projectedYearEnd !== null && <Chip dot={projectedYearEnd < 0 ? 'alert' : 'cyan'}>Projected year-end {fmtShort(projectedYearEnd)}</Chip>}
+          {!netWorthFlat && <Chip dot={netWorthChange < 0 ? 'alert' : 'good'}>Net worth {netWorthChange < 0 ? '↓' : '↑'} {fmtShort(Math.abs(netWorthChange))} in 12 months</Chip>}
+        </>}
+      />
 
-      {/* Row 1 — Savings Rate + Projected Year-End */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
-        {/* Savings Rate */}
-        <SectionCard
-          title="Savings Rate"
-          subtitle="Current month — income minus expenses"
-          loading={loading}
-        >
-          <div className="flex flex-col items-center justify-center py-6 gap-2">
-            <p className={`text-6xl font-bold font-mono ${savingsRateColor}`}>
-              {savingsRate !== null ? `${savingsRate}%` : '—'}
-            </p>
-            <p className="text-sm text-neutral-400">{savingsRateLabel}</p>
-            {savingsRate !== null && (
-              <div className="w-full mt-4">
-                <div className="flex justify-between text-xs text-neutral-500 mb-1.5">
-                  <span>₱{fmt(monthRevenue)} income</span>
-                  <span>₱{fmt(monthExpenses)} spent</span>
+      <div className="grid lg:grid-cols-[1fr_1.6fr] gap-4">
+        <Card title="Savings rate" subtitle={monthName(currentMonth)}>
+          {savingsRate === null ? (
+            <EmptyState title="No income data this month" body="Log this month's income to see how much you're saving." />
+          ) : (
+            <div className="flex flex-col items-center gap-3 py-2">
+              <Ring value={savingsRate} target={20}>
+                <div>
+                  <p className="text-[28px] font-bold tracking-tight tnum leading-none">{savingsRate}%</p>
+                  <p className={`text-xs font-semibold mt-1 ${savingsRate < 0 ? 'text-alert' : savingsRate >= 20 ? 'text-good' : 'text-muted'}`}>{savingsLabel}</p>
                 </div>
-                <div className="w-full bg-neutral-800 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all ${savingsRate >= 20 ? 'bg-emerald-500' : savingsRate >= 0 ? 'bg-yellow-400' : 'bg-red-400'}`}
-                    style={{ width: `${Math.min(100, Math.max(0, (monthExpenses / monthRevenue) * 100))}%` }}
-                  />
-                </div>
-                <p className="text-xs text-neutral-600 mt-1.5 text-center">Target: 20% savings rate</p>
+              </Ring>
+              <div className="flex gap-4 text-xs">
+                <span><span className="font-bold tnum">{fmtPeso(monthRevenue)}</span> <span className="text-muted">in</span></span>
+                <span><span className="font-bold tnum">{fmtPeso(monthExpenses)}</span> <span className="text-muted">out</span></span>
               </div>
-            )}
-          </div>
-        </SectionCard>
-
-        {/* Projected Year-End */}
-        <SectionCard
-          title="Projected Year-End Savings"
-          subtitle={`${year} — based on avg of past months`}
-          loading={loading}
-        >
-          {projectedYearEnd === null ? (
-            <div className="flex items-center justify-center h-48 text-neutral-600 text-sm">
-              Not enough data yet — need at least 1 month of history.
+              <p className="text-[11px] text-faint">Black tick marks the 20% target</p>
             </div>
+          )}
+        </Card>
+
+        <Card title="Projected year-end savings" subtitle={`${year}, based on your average month`}
+          action={projectedYearEnd !== null && <ChartLegend items={[{ name: 'Actual', color: INK }, { name: 'This month', color: CYAN }, { name: 'Projected', className: 'hatch' }]} />}>
+          {projectedYearEnd === null ? (
+            <EmptyState title="Not enough data yet" body="You need at least one past month with income this year." />
           ) : (
             <>
-              <div className="text-center py-3 mb-4">
-                <p className={`text-4xl font-bold font-mono ${projectedYearEnd >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {projectedYearEnd >= 0 ? '' : '-'}₱{fmtShort(Math.abs(projectedYearEnd)).replace('₱', '')}
-                </p>
-                <p className="text-xs text-neutral-500 mt-1">
-                  Avg monthly net: {avgMonthlyNet >= 0 ? '+' : ''}₱{fmt(avgMonthlyNet)}
-                </p>
+              <p className={`text-[30px] font-bold tracking-[-0.03em] tnum leading-tight ${projectedYearEnd < 0 ? 'text-alert' : ''}`}>{fmtPeso(projectedYearEnd)}</p>
+              <p className="text-xs text-muted mt-1">avg monthly net <span className="font-semibold text-ink tnum">{fmtPeso(avgMonthlyNet, { sign: true })}</span></p>
+              <div className="mt-3">
+                <BarSeries data={projectionData} xKey="month" stacked height={190}
+                  bars={[{ key: 'Actual', name: 'Actual' }, { key: 'Projected', name: 'Projected' }]}
+                  colorFor={(d, key) => key === 'Projected' ? 'hatch' : d.isCurrent ? CYAN : INK} />
               </div>
-              <ResponsiveContainer width="100%" height={140}>
-                <BarChart data={projectionData} margin={{ top: 0, right: 4, left: 0, bottom: 0 }}>
-                  <XAxis dataKey="month" tick={{ fill: '#737373', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <YAxis tickFormatter={v => fmtShort(v)} tick={{ fill: '#737373', fontSize: 10 }} axisLine={false} tickLine={false} width={52} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <ReferenceLine y={0} stroke="#404040" />
-                  <Bar dataKey="Actual" fill="#10b981" radius={[3, 3, 0, 0]} maxBarSize={24} />
-                  <Bar dataKey="Projected" fill="#10b98150" radius={[3, 3, 0, 0]} maxBarSize={24} />
-                </BarChart>
-              </ResponsiveContainer>
-              <p className="text-xs text-neutral-600 mt-2 text-center">Solid = actual · Faded = projected</p>
             </>
           )}
-        </SectionCard>
+        </Card>
       </div>
 
-      {/* Row 2 — Net Worth Trend */}
-      <SectionCard
-        title="Net Worth Trend"
-        subtitle="Last 12 months — total bank balance over time"
-        loading={loading}
-      >
-        {netWorthData.every(d => d['Net Worth'] === netWorthData[0]['Net Worth']) ? (
-          <div className="flex items-center justify-center h-48 text-neutral-600 text-sm">
-            Not enough transaction history yet.
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={netWorthData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="nwGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="month" tick={{ fill: '#737373', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tickFormatter={v => fmtShort(v)} tick={{ fill: '#737373', fontSize: 11 }} axisLine={false} tickLine={false} width={60} />
-              <Tooltip content={<ChartTooltip />} />
-              <Line type="monotone" dataKey="Net Worth" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981', r: 3 }} activeDot={{ r: 5 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        )}
-      </SectionCard>
+      <Card title="Net worth" subtitle="Total bank balance, last 12 months" className="mt-4">
+        {netWorthFlat
+          ? <EmptyState title="Not enough transaction history yet" />
+          : <AreaTrend data={netWorthData} xKey="month" height={240} endLabel
+              series={[{ key: 'Net Worth', name: 'Net worth', stroke: '#06B6D4', fill: CYAN }]} />}
+      </Card>
 
-      {/* Row 3 — Income Consistency */}
-      <SectionCard
-        title="Income Consistency"
-        subtitle="Last 12 months — monthly revenue"
-        loading={loading}
-      >
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={incomeData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-            <XAxis dataKey="month" tick={{ fill: '#737373', fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis tickFormatter={v => fmtShort(v)} tick={{ fill: '#737373', fontSize: 11 }} axisLine={false} tickLine={false} width={56} />
-            <Tooltip content={<ChartTooltip />} />
-            <ReferenceLine y={avgMonthlyRevenue} stroke="#10b981" strokeDasharray="4 4" label={{ value: 'Avg', fill: '#10b981', fontSize: 10, position: 'insideTopRight' }} />
-            <Bar dataKey="Revenue" radius={[3, 3, 0, 0]} maxBarSize={32}>
-              {incomeData.map((entry, i) => (
-                <Cell
-                  key={i}
-                  fill={entry.Revenue >= avgMonthlyRevenue ? '#10b981' : '#ef4444'}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-        <p className="text-xs text-neutral-600 mt-1 text-center">
-          Green = at or above average · Red = below average · Dashed line = 12-month average
-        </p>
-      </SectionCard>
+      <Card title="Income consistency" subtitle="Monthly revenue against your 12-month average" className="mt-4"
+        action={avgMonthlyRevenue > 0 && <ChartLegend items={[{ name: 'At or above average', color: CYAN }, { name: 'Below average', color: BELOW_AVG }]} />}>
+        {avgMonthlyRevenue === 0
+          ? <EmptyState title="No income in the last 12 months" />
+          : <BarSeries data={incomeData} xKey="month" height={220}
+              bars={[{ key: 'Revenue', name: 'Revenue' }]}
+              colorFor={(d) => d.Revenue >= avgMonthlyRevenue ? CYAN : BELOW_AVG}
+              average={avgMonthlyRevenue} averageLabel={`avg ${fmtShort(avgMonthlyRevenue)}`} />}
+      </Card>
     </div>
   )
 }

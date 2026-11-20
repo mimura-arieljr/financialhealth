@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   monthKey, shiftMonth, daysInMonth, monthName, monthShort, monthLabel,
-  fmtDayMonth, lastMonthEnd, monthOptions, fmtPeso, fmtMoney, fmtShort, pctChange, deltaTone,
+  fmtDayMonth, lastMonthEnd, monthOptions, fmtPeso, fmtMoney, fmtShort, ordinal, pctChange, deltaTone,
 } from './utils'
 
 const NOW = new Date(2026, 10, 21) // Sat 21 Nov 2026
@@ -82,4 +82,11 @@ describe('fmtMoney', () => {
   it('plus sign on request', () => expect(fmtMoney('42000', { sign: true })).toBe('+₱42,000.00'))
   it('no sign on zero', () => expect(fmtMoney(0, { sign: true })).toBe('₱0.00'))
   it('rounds to cents', () => expect(fmtMoney(1.239)).toBe('₱1.24'))
+})
+
+describe('ordinal', () => {
+  it('suffixes', () => {
+    expect([1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 31].map(ordinal))
+      .toEqual(['1st', '2nd', '3rd', '4th', '11th', '12th', '13th', '21st', '22nd', '23rd', '31st'])
+  })
 })

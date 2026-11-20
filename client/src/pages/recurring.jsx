@@ -1,118 +1,84 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
-import { fmt } from '../lib/utils'
+import { useQuickAdd } from '../hooks/useQuickAdd'
 import { logRecurringExpense } from '../lib/recurring'
-import { Modal } from '../components/ui/modal'
 import { DAYS_OF_WEEK } from '../lib/consts'
+import { recurringStatus, daysUntil, monthlyEquivalent, sortByAttention } from '../lib/recurringStatus'
+import { recurringHeadline } from '../lib/headlines'
+import { categoryColorMap, categoryColor } from '../lib/palette'
+import { fmtDayMonth, fmtMoney, fmtPeso, ordinal } from '../lib/utils'
+import { Modal } from '../components/ui/modal'
+import { Card } from '../components/ui/card'
+import { Button } from '../components/ui/button'
+import { Badge, Chip } from '../components/ui/pill'
+import { PageHeader } from '../components/ui/pageHeader'
+import { Toggle } from '../components/ui/toggle'
+import { EmptyState } from '../components/ui/emptyState'
 import { ErrorBanner } from '../components/ui/errorBanner'
-import { FieldInput } from '../components/ui/fieldInput'
-import { FieldSelect } from '../components/ui/fieldSelect'
+import { Skeleton } from '../components/ui/skeleton'
+import { RowActions } from '../components/ui/rowActions'
+import { CategoryAvatar } from '../components/ui/avatar'
+import { PlusIcon } from '../components/ui/icons'
+import { RecurringForm } from './recurring/recurringForm'
+import { Timeline } from './recurring/timeline'
 
-function RecurringForm({ initialValues, banks, creditCards, categories, onSubmit, onClose, submitLabel }) {
-  const [description, setDescription] = useState(initialValues?.description || '')
-  const [amount, setAmount] = useState(initialValues?.amount ? String(initialValues.amount) : '')
-  const [categoryId, setCategoryId] = useState(initialValues?.category_id || '')
-  const [bankId, setBankId] = useState(initialValues?.bank_id || '')
-  const [creditCardId, setCreditCardId] = useState(initialValues?.credit_card_id || '')
-  const [frequency, setFrequency] = useState(initialValues?.frequency || 'monthly')
-  const [dayOfMonth, setDayOfMonth] = useState(initialValues?.day_of_month ? String(initialValues.day_of_month) : '1')
-  const [dayOfWeek, setDayOfWeek] = useState(initialValues?.day_of_week !== undefined ? String(initialValues.day_of_week) : '1')
-  const [error, setError] = useState('')
-  const [saving, setSaving] = useState(false)
+const isDueState = (s) => s.state === 'overdue' || s.state === 'due-today'
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    if (!description.trim() || !amount || !bankId) {
-      setError('Description, amount, and bank are required.')
-      return
-    }
-    setSaving(true)
-    const err = await onSubmit({
-      description: description.trim(),
-      amount: parseFloat(amount),
-      category_id: categoryId || null,
-      bank_id: bankId,
-      credit_card_id: creditCardId || null,
-      frequency,
-      day_of_month: frequency === 'monthly' ? parseInt(dayOfMonth) : null,
-      day_of_week: frequency === 'weekly' ? parseInt(dayOfWeek) : null,
-    })
-    if (err) setError(err)
-    setSaving(false)
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <FieldInput label="Description" value={description} onChange={setDescription}
-        placeholder="e.g. Netflix" required />
-      <FieldInput label="Amount (₱)" type="number" value={amount} onChange={setAmount}
-        placeholder="0.00" required min="0.01" step="0.01" />
-      <FieldSelect label="Frequency" value={frequency} onChange={setFrequency}>
-        <option value="monthly">Monthly</option>
-        <option value="weekly">Weekly</option>
-      </FieldSelect>
-
-      {/* Day selector — changes based on frequency */}
-      {frequency === 'monthly' ? (
-        <FieldInput
-          label="Day of Month"
-          type="number"
-          value={dayOfMonth}
-          onChange={setDayOfMonth}
-          min="1"
-          max="31"
-          required
-        />
-      ) : (
-        <FieldSelect label="Day of Week" value={dayOfWeek} onChange={setDayOfWeek}>
-          {DAYS_OF_WEEK.map((d, i) => (
-            <option key={i} value={i}>{d}</option>
-          ))}
-        </FieldSelect>
-      )}
-
-      <FieldSelect label="Category" value={categoryId} onChange={setCategoryId}>
-        <option value="">— Select category —</option>
-        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-      </FieldSelect>
-      <FieldSelect label="Financing Bank" value={bankId} onChange={setBankId} required>
-        <option value="">— Select bank —</option>
-        {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-      </FieldSelect>
-      <FieldSelect label="Credit Card (optional)" value={creditCardId} onChange={setCreditCardId}>
-        <option value="">— Cash / Direct Debit —</option>
-        {creditCards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-      </FieldSelect>
-
-      <ErrorBanner message={error} />
-      <div className="flex gap-3 pt-2">
-        <button type="button" onClick={onClose}
-          className="flex-1 bg-neutral-800 hover:bg-neutral-700 text-white text-sm font-medium rounded-lg py-2.5 transition-colors">
-          Cancel
-        </button>
-        <button type="submit" disabled={saving}
-          className="flex-1 bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-neutral-950 text-sm font-semibold rounded-lg py-2.5 transition-colors">
-          {saving ? 'Saving...' : submitLabel}
-        </button>
-      </div>
-    </form>
-  )
+function scheduleLine(item) {
+  const when = item.frequency === 'monthly' ? `Every ${ordinal(item.day_of_month)}` : `Every ${DAYS_OF_WEEK[item.day_of_week]}`
+  return [when, item.categories?.name, item.banks?.name].filter(Boolean).join(' · ')
 }
 
-function scheduleLabel(item) {
-  if (item.frequency === 'monthly') {
-    const day = item.day_of_month
-    const suffix = day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'
-    return `Every ${day}${suffix} of the month`
-  }
-  return `Every ${DAYS_OF_WEEK[item.day_of_week]}`
+function statusBadge(item, s, now) {
+  if (!item.is_active) return <Badge>Paused</Badge>
+  if (s.state === 'overdue') return <Badge tone="alert">Overdue · {fmtDayMonth(s.dueDate)}</Badge>
+  if (s.state === 'due-today') return <Badge tone="alert">Due today</Badge>
+  if (s.state === 'logged') return <Badge tone="good">Logged this {item.frequency === 'weekly' ? 'week' : 'month'}</Badge>
+  const days = daysUntil(s.nextDue, now)
+  return <Badge>{days === 1 ? 'Tomorrow' : `In ${days} days`}</Badge>
+}
+
+function RecurringRow({ item, now, colors, onEdit, onDelete, onToggle, onPay, busy }) {
+  const s = recurringStatus(item, now)
+  const due = item.is_active && isDueState(s)
+  const catName = item.categories?.name || 'Uncategorised'
+  return (
+    <div className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-row transition-colors ${due ? 'bg-alert-bg/50' : 'hover:bg-sub'} ${item.is_active ? '' : 'opacity-60'}`}>
+      <button type="button" className="md:hidden absolute inset-0 rounded-row" aria-label={`Edit ${item.description}`} onClick={onEdit} />
+      <span className="relative z-10"><Toggle checked={item.is_active} onChange={onToggle} disabled={busy.toggling} label={`${item.description} active`} /></span>
+      <span className="hidden sm:block"><CategoryAvatar name={catName} color={categoryColor(colors, item.category_id)} /></span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold truncate flex items-center gap-2">
+          <span className="truncate">{item.description}</span>
+          {item.credit_cards?.name && <Badge className="hidden md:inline-flex">{item.credit_cards.name}</Badge>}
+          <span className="md:hidden font-semibold text-muted tnum shrink-0">· {fmtPeso(item.amount)}</span>
+        </p>
+        <p className="text-xs text-muted truncate">{scheduleLine(item)}</p>
+        <div className="md:hidden mt-1">{statusBadge(item, s, now)}</div>
+      </div>
+      <div className="hidden md:block w-36 shrink-0">{statusBadge(item, s, now)}</div>
+      <span className="hidden lg:block w-24 text-xs text-muted shrink-0">{item.last_logged ? `Last ${fmtDayMonth(item.last_logged)}` : 'Never logged'}</span>
+      <span className="hidden md:block w-24 text-right text-sm font-bold tnum shrink-0">{fmtMoney(item.amount)}</span>
+      {item.is_active && (
+        <span className={`relative z-10 shrink-0 ${due ? '' : 'hidden md:inline-block'}`}>
+          <Button size="sm" variant={due ? 'cyan' : 'light'} disabled={busy.paying} onClick={onPay}>
+            {busy.paying ? 'Paying...' : 'Pay now'}
+          </Button>
+        </span>
+      )}
+      <RowActions name={item.description} onEdit={onEdit} onDelete={onDelete} deleting={busy.deleting} />
+    </div>
+  )
 }
 
 export default function Recurring() {
   const { user } = useAuth()
+  const userId = user?.id
+  const { dataVersion, notifySaved } = useQuickAdd()
+  const now = useMemo(() => new Date(), [])
+
   const [banks, setBanks] = useState([])
   const [creditCards, setCreditCards] = useState([])
   const [categories, setCategories] = useState([])
@@ -124,54 +90,51 @@ export default function Recurring() {
   const [toggling, setToggling] = useState(null)
   const [paying, setPaying] = useState(null)
   const [payError, setPayError] = useState('')
-  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!userId) return
     Promise.all([
-      fetchCached('banks', user.id, 'id, name', 'name'),
-      fetchCached('credit_cards', user.id, 'id, name', 'name'),
-      fetchCached('categories', user.id, 'id, name', 'name'),
+      fetchCached('banks', userId, 'id, name', 'name'),
+      fetchCached('credit_cards', userId, 'id, name', 'name'),
+      fetchCached('categories', userId, 'id, name', 'name'),
     ]).then(([b, cc, cat]) => {
       if (!b.error) setBanks(b.data)
       if (!cc.error) setCreditCards(cc.data)
       if (!cat.error) setCategories(cat.data)
     })
-  }, [user?.id])
+  }, [userId, dataVersion])
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!userId) return
+    let cancelled = false
     supabase
       .from('recurring_expenses')
       .select(`id, description, amount, frequency, day_of_month, day_of_week,
         last_logged, is_active, category_id, bank_id, credit_card_id,
         categories(id, name), banks(id, name), credit_cards(id, name)`)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('description')
       .then(({ data, error }) => {
+        if (cancelled) return
         if (!error) setItems(data)
         setLoading(false)
       })
-  }, [user?.id, refreshKey])
+    return () => { cancelled = true }
+  }, [userId, dataVersion])
 
   const handleAdd = async (values) => {
-    const { error } = await supabase
-      .from('recurring_expenses')
-      .insert({ user_id: user.id, ...values })
+    const { error } = await supabase.from('recurring_expenses').insert({ user_id: userId, ...values })
     if (error) return error.message
-    setRefreshKey(k => k + 1)
     setShowAdd(false)
+    notifySaved()
     return null
   }
 
   const handleEdit = async (values) => {
-    const { error } = await supabase
-      .from('recurring_expenses')
-      .update(values)
-      .eq('id', editing.id)
+    const { error } = await supabase.from('recurring_expenses').update(values).eq('id', editing.id)
     if (error) return error.message
-    setRefreshKey(k => k + 1)
     setEditing(null)
+    notifySaved()
     return null
   }
 
@@ -180,173 +143,95 @@ export default function Recurring() {
     setDeleting(id)
     await supabase.from('recurring_expenses').delete().eq('id', id)
     setDeleting(null)
-    setRefreshKey(k => k + 1)
+    setEditing(null)
+    notifySaved()
   }
 
   const handleToggle = async (item) => {
     setToggling(item.id)
-    await supabase
-      .from('recurring_expenses')
-      .update({ is_active: !item.is_active })
-      .eq('id', item.id)
+    await supabase.from('recurring_expenses').update({ is_active: !item.is_active }).eq('id', item.id)
     setToggling(null)
-    setRefreshKey(k => k + 1)
+    notifySaved()
   }
 
   const handlePayNow = async (item) => {
     setPaying(item.id)
     setPayError('')
-    const err = await logRecurringExpense(user.id, item)
+    const err = await logRecurringExpense(userId, item)
     if (err) setPayError(err)
     setPaying(null)
-    setRefreshKey(k => k + 1)
+    notifySaved()
   }
 
-  const active = items.filter(i => i.is_active)
-  const inactive = items.filter(i => !i.is_active)
+  const colors = categoryColorMap(categories)
+  const active = sortByAttention(items.filter(i => i.is_active), now)
+  const paused = items.filter(i => !i.is_active)
+  const dueItems = active.filter(i => isDueState(recurringStatus(i, now)))
+  const comingUp = active.filter(i => !dueItems.includes(i))
+  const monthlyTotal = active.reduce((s, i) => s + monthlyEquivalent(i), 0)
 
-  return (
-    <div className="p-4 sm:p-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Recurring</h1>
-          <p className="text-neutral-500 text-sm mt-1">Manage your scheduled expenses.</p>
-        </div>
-        <button onClick={() => setShowAdd(true)}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto bg-accent-500 hover:bg-accent-400 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Add Recurring
-        </button>
-      </div>
+  const row = (item) => (
+    <RecurringRow key={item.id} item={item} now={now} colors={colors}
+      onEdit={() => setEditing(item)} onDelete={() => handleDelete(item.id)}
+      onToggle={() => handleToggle(item)} onPay={() => handlePayNow(item)}
+      busy={{ toggling: toggling === item.id, paying: paying === item.id, deleting: deleting === item.id }} />
+  )
 
-      <ErrorBanner message={payError} />
-
-      {loading ? (
-        <div className="text-center py-16 text-neutral-600 text-sm">Loading...</div>
-      ) : items.length === 0 ? (
-        <div className="text-center py-16 text-neutral-600 text-sm">
-          No recurring expenses yet. Add your first one.
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {/* Active */}
-          {active.length > 0 && (
-            <div>
-              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">
-                Active — {active.length} item{active.length !== 1 ? 's' : ''} — ₱{fmt(active.reduce((sum, i) => sum + i.amount, 0))} / mo
-              </p>
-              <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
-                {active.map((item, idx) => (
-                  <RecurringRow key={item.id} item={item} isLast={idx === active.length - 1}
-                    onEdit={() => setEditing(item)}
-                    onDelete={() => handleDelete(item.id)}
-                    onToggle={() => handleToggle(item)}
-                    onPayNow={() => handlePayNow(item)}
-                    deleting={deleting === item.id}
-                    toggling={toggling === item.id}
-                    paying={paying === item.id}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Inactive */}
-          {inactive.length > 0 && (
-            <div>
-              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">
-                Paused — {inactive.length} item{inactive.length !== 1 ? 's' : ''}
-              </p>
-              <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden opacity-60">
-                {inactive.map((item, idx) => (
-                  <RecurringRow key={item.id} item={item} isLast={idx === inactive.length - 1}
-                    onEdit={() => setEditing(item)}
-                    onDelete={() => handleDelete(item.id)}
-                    onToggle={() => handleToggle(item)}
-                    deleting={deleting === item.id}
-                    toggling={toggling === item.id}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {showAdd && (
-        <Modal title="Add Recurring Expense" onClose={() => setShowAdd(false)}>
-          <RecurringForm banks={banks} creditCards={creditCards} categories={categories}
-            onSubmit={handleAdd} onClose={() => setShowAdd(false)} submitLabel="Save" />
-        </Modal>
-      )}
-
-      {editing && (
-        <Modal title="Edit Recurring Expense" onClose={() => setEditing(null)}>
-          <RecurringForm initialValues={editing} banks={banks} creditCards={creditCards}
-            categories={categories} onSubmit={handleEdit} onClose={() => setEditing(null)}
-            submitLabel="Save Changes" />
-        </Modal>
-      )}
+  const groupTitle = (title, extra) => (
+    <div className="flex items-center justify-between px-1 mb-1.5 mt-5 first:mt-0 text-xs font-semibold text-muted">
+      <span>{title}</span>{extra && <span className="tnum">{extra}</span>}
     </div>
   )
-}
 
-function RecurringRow({ item, isLast, onEdit, onDelete, onToggle, onPayNow, deleting, toggling, paying }) {
   return (
-    <div className={`flex items-center gap-4 px-5 py-4 group hover:bg-neutral-800/30 transition-colors ${!isLast ? 'border-b border-neutral-800/50' : ''}`}>
-      {/* Toggle active */}
-      <button onClick={onToggle} disabled={toggling}
-        className={`relative inline-flex w-8 h-4.5 rounded-full transition-colors shrink-0 disabled:opacity-30 ${item.is_active ? 'bg-accent-500' : 'bg-neutral-600'}`}>
-        <span className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full bg-white transition-transform ${item.is_active ? 'translate-x-3.5' : ''}`} />
-      </button>
+    <div>
+      <PageHeader
+        title="Recurring"
+        headline={loading ? null : recurringHeadline({ activeCount: active.length, monthlyTotal, dueCount: dueItems.length })}
+        chips={!loading && <>
+          {dueItems.length > 0 && <Chip dot="alert">{dueItems.length} due now</Chip>}
+          {paused.length > 0 && <Chip dot="ink">{paused.length} paused</Chip>}
+        </>}
+        actions={<Button icon={<PlusIcon />} onClick={() => setShowAdd(true)}>Add recurring</Button>}
+      />
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm text-white font-medium">{item.description}</p>
-          {item.credit_cards?.name && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400">
-              {item.credit_cards.name}
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-neutral-500 mt-0.5">
-          {scheduleLabel(item)}
-          {item.categories?.name ? ` · ${item.categories.name}` : ''}
-          {item.banks?.name ? ` · ${item.banks.name}` : ''}
-          {item.last_logged ? ` · Last logged ${item.last_logged}` : ''}
-        </p>
-      </div>
+      {!loading && active.length > 0 && <div className="mb-4"><Timeline items={active} now={now} /></div>}
 
-      {/* Amount */}
-      <span className="text-sm font-mono text-white whitespace-nowrap shrink-0">
-        ₱{fmt(item.amount)}
-      </span>
+      <Card>
+        <ErrorBanner message={payError} />
+        {loading ? (
+          <div className="space-y-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14" />)}</div>
+        ) : items.length === 0 ? (
+          <EmptyState title="No recurring expenses yet" body="Add bills and subscriptions to see what's due and pay them in one tap."
+            action={<Button icon={<PlusIcon />} onClick={() => setShowAdd(true)}>Add recurring</Button>} />
+        ) : (
+          <>
+            {/* Desktop: one attention-sorted list; mobile: needs attention, then coming up */}
+            <div className="hidden md:block">
+              {active.length > 0 && groupTitle(`Active · ${active.length}`, `≈ ${fmtPeso(monthlyTotal)} / month`)}
+              <div className="space-y-1">{active.map(row)}</div>
+            </div>
+            <div className="md:hidden">
+              {dueItems.length > 0 && <>{groupTitle('Needs attention')}<div className="space-y-1">{dueItems.map(row)}</div></>}
+              {comingUp.length > 0 && <>{groupTitle('Coming up')}<div className="space-y-1">{comingUp.map(row)}</div></>}
+            </div>
+            {paused.length > 0 && <>{groupTitle(`Paused · ${paused.length}`)}<div className="space-y-1">{paused.map(row)}</div></>}
+          </>
+        )}
+      </Card>
 
-      {/* Pay now — active items only */}
-      {item.is_active && (
-        <button onClick={onPayNow} disabled={paying}
-          className="text-xs font-medium px-2.5 py-1 rounded-md bg-neutral-800 hover:bg-accent-500 text-neutral-300 hover:text-neutral-950 transition-colors disabled:opacity-50 shrink-0">
-          {paying ? 'Paying...' : 'Pay now'}
-        </button>
+      {showAdd && (
+        <Modal title="Add recurring expense" onClose={() => setShowAdd(false)}>
+          <RecurringForm banks={banks} creditCards={creditCards} categories={categories}
+            onSubmit={handleAdd} onClose={() => setShowAdd(false)} submitLabel="Add recurring" />
+        </Modal>
       )}
-
-      {/* Actions */}
-      <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-        <button onClick={onEdit} className="text-neutral-500 hover:text-white transition-colors p-1">
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-          </svg>
-        </button>
-        <button onClick={onDelete} disabled={deleting}
-          className="text-neutral-500 hover:text-red-400 transition-colors p-1 disabled:opacity-30">
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-          </svg>
-        </button>
-      </div>
+      {editing && (
+        <Modal title="Edit recurring expense" onClose={() => setEditing(null)}>
+          <RecurringForm initialValues={editing} banks={banks} creditCards={creditCards} categories={categories}
+            onSubmit={handleEdit} onClose={() => setEditing(null)} onDelete={() => handleDelete(editing.id)} submitLabel="Save changes" />
+        </Modal>
+      )}
     </div>
   )
 }

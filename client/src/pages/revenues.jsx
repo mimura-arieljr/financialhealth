@@ -1,36 +1,53 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
+import { useQuickAdd } from '../hooks/useQuickAdd'
+import { compareMonth } from '../lib/finance'
+import { revenuesHeadline } from '../lib/headlines'
+import { groupByDay } from '../lib/grouping'
+import { fmtMoney, fmtPeso, getLast12Months, monthKey, monthName, monthOptions } from '../lib/utils'
 import { Modal } from '../components/ui/modal'
+import { Card } from '../components/ui/card'
+import { Button } from '../components/ui/button'
+import { Chip } from '../components/ui/pill'
+import { PageHeader } from '../components/ui/pageHeader'
+import { MonthSwitcher } from '../components/ui/monthSwitcher'
+import { FilterPill } from '../components/ui/filterPill'
+import { DayGroup } from '../components/ui/dayGroup'
+import { EmptyState } from '../components/ui/emptyState'
+import { Skeleton } from '../components/ui/skeleton'
+import { RowActions } from '../components/ui/rowActions'
+import { BankPill } from '../components/ui/avatar'
+import { IncomeIcon, PlusIcon } from '../components/ui/icons'
 import { RevenueForm } from '../components/forms/revenueForm'
-import { fmt } from '../lib/utils'
 
 export default function Revenues() {
-  const { user, loading: authLoading } = useAuth()
+  const { user } = useAuth()
+  const userId = user?.id
+  const { openQuickAdd, dataVersion, notifySaved } = useQuickAdd()
+  const now = useMemo(() => new Date(), [])
+
   const [banks, setBanks] = useState([])
   const [revenues, setRevenues] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showAdd, setShowAdd] = useState(false)
-  const [editingRevenue, setEditingRevenue] = useState(null)
+  const [editing, setEditing] = useState(null)
   const [deleting, setDeleting] = useState(null)
+  const [month, setMonth] = useState(monthKey(now))
   const [filterBank, setFilterBank] = useState('')
-  const [filterMonth, setFilterMonth] = useState('')
-  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
-    if (!user?.id) return
-    fetchCached('banks', user.id, 'id, name', 'name')
-      .then(({ data, error }) => { if (!error) setBanks(data) })
-  }, [user?.id, refreshKey])
+    if (!userId) return
+    fetchCached('banks', userId, 'id, name', 'name').then(({ data, error }) => { if (!error) setBanks(data) })
+  }, [userId, dataVersion])
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!userId) return
     let cancelled = false
     supabase
       .from('revenues')
       .select('id, description, amount, date, bank_id, created_at, banks(id, name)')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('date', { ascending: false })
       .order('created_at', { ascending: false })
       .then(({ data, error }) => {
@@ -39,21 +56,13 @@ export default function Revenues() {
         setLoading(false)
       })
     return () => { cancelled = true }
-  }, [user?.id, refreshKey])
-
-  const handleAdd = async (values) => {
-    const { error } = await supabase.from('revenues').insert({ user_id: user.id, ...values })
-    if (error) return error.message
-    setRefreshKey(k => k + 1)
-    setShowAdd(false)
-    return null
-  }
+  }, [userId, dataVersion])
 
   const handleEdit = async (values) => {
-    const { error } = await supabase.from('revenues').update(values).eq('id', editingRevenue.id)
+    const { error } = await supabase.from('revenues').update(values).eq('id', editing.id)
     if (error) return error.message
-    setRefreshKey(k => k + 1)
-    setEditingRevenue(null)
+    setEditing(null)
+    notifySaved()
     return null
   }
 
@@ -62,147 +71,72 @@ export default function Revenues() {
     setDeleting(id)
     await supabase.from('revenues').delete().eq('id', id)
     setDeleting(null)
-    setRefreshKey(k => k + 1)
+    setEditing(null)
+    notifySaved()
   }
 
-  const filtered = revenues.filter(r => {
-    if (filterBank && r.banks?.id !== filterBank) return false
-    if (filterMonth && r.date?.slice(0, 7) !== filterMonth) return false
-    return true
-  })
+  const inMonth = month ? revenues.filter(r => r.date?.slice(0, 7) === month) : revenues
+  const monthTotal = inMonth.reduce((s, r) => s + Number(r.amount), 0)
+  // Same 12-month average as Analytics' income consistency
+  const avg12 = getLast12Months().reduce((s, { key }) =>
+    s + revenues.filter(r => r.date?.slice(0, 7) === key).reduce((ss, r) => ss + Number(r.amount), 0), 0) / 12
 
-  const totalFiltered = filtered.reduce((sum, r) => sum + Number(r.amount), 0)
-  const months = [...new Set(revenues.map(r => r.date?.slice(0, 7)).filter(Boolean))].sort().reverse()
-  const hasFilters = filterMonth || filterBank
-
-  if (authLoading || !user) return null
+  const filtered = filterBank ? inMonth.filter(r => r.bank_id === filterBank) : inMonth
+  const filteredTotal = filtered.reduce((s, r) => s + Number(r.amount), 0)
 
   return (
-    <div className="p-4 sm:p-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Revenues</h1>
-          <p className="text-neutral-500 text-sm mt-1">Track your income and transfers.</p>
-        </div>
-        <button onClick={() => setShowAdd(true)}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto bg-accent-500 hover:bg-accent-400 text-neutral-950 font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Add Revenue
-        </button>
-      </div>
+    <div>
+      <PageHeader
+        title="Revenues"
+        headline={loading ? null : revenuesHeadline({
+          total: monthTotal, count: inMonth.length, monthName: month ? monthName(month) : null,
+          comparison: month ? compareMonth(revenues, month, now) : null,
+        })}
+        chips={!loading && avg12 > 0 && <Chip dot="cyan">12-month avg {fmtPeso(avg12)}</Chip>}
+        month={<MonthSwitcher value={month} onChange={setMonth} options={monthOptions(revenues.map(r => r.date?.slice(0, 7)), now)} />}
+        actions={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('revenue')} className="hidden lg:inline-flex">Add revenue</Button>}
+      />
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap mb-6">
-        <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
-          <option value="">All months</option>
-          {months.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
-        <select value={filterBank} onChange={e => setFilterBank(e.target.value)}
-          className="w-full sm:w-auto bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500 transition-colors select-chevron">
-          <option value="">All banks</option>
-          {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-        </select>
-        {hasFilters && (
-          <button onClick={() => { setFilterMonth(''); setFilterBank('') }}
-            className="text-xs text-neutral-400 hover:text-white px-3 py-2 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-colors">
-            Clear filters
-          </button>
-        )}
-      </div>
-
-      {/* Summary */}
-      {filtered.length > 0 && (
-        <div className="flex items-center justify-between bg-neutral-900 border border-neutral-800 rounded-xl px-5 py-3.5 mb-4">
-          <span className="text-sm text-neutral-400">
-            {filtered.length} entr{filtered.length !== 1 ? 'ies' : 'y'}{hasFilters ? ' (filtered)' : ''}
-          </span>
-          <span className="text-sm font-semibold text-emerald-400 font-mono">+₱{fmt(totalFiltered)}</span>
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
-        {/* Desktop header */}
-        <div className="hidden sm:grid grid-cols-[1fr_auto_auto] gap-4 px-5 py-3 border-b border-neutral-800 text-xs font-medium text-neutral-500 uppercase tracking-wider">
-          <span>Description</span>
+      <Card>
+        <div className="flex items-center gap-3 mb-4">
+          {banks.length > 0 && <FilterPill label="All banks" value={filterBank} onChange={setFilterBank} options={banks.map(b => ({ value: b.id, label: b.name }))} />}
+          <p className="ml-auto text-xs text-muted whitespace-nowrap">
+            {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'} · <span className="font-bold text-good tnum">{fmtMoney(filteredTotal, { sign: true })}</span>
+          </p>
         </div>
 
         {loading ? (
-          <div className="px-5 py-12 text-center text-neutral-600 text-sm">Loading...</div>
+          <div className="space-y-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14" />)}</div>
         ) : filtered.length === 0 ? (
-          <div className="px-5 py-12 text-center text-neutral-600 text-sm">
-            {revenues.length === 0 ? 'No revenue entries yet. Add your first one!' : 'No entries match your filters.'}
-          </div>
+          revenues.length === 0
+            ? <EmptyState title="No income logged yet" body="Add your salary or any money you receive to see it here."
+                action={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('revenue')}>Add revenue</Button>} />
+            : <EmptyState title={filterBank ? 'No entries for this bank' : `No income logged in ${monthName(month)}`} />
         ) : (
-          filtered.map(rev => (
-            <div key={rev.id} className="border-b border-neutral-800/50 last:border-0 hover:bg-neutral-800/30 transition-colors group">
-              {/* Mobile card */}
-              <div className="sm:hidden flex items-center gap-3 px-4 py-3.5">
-                <div className="flex gap-1 shrink-0">
-                  <button onClick={() => setEditingRevenue(rev)} className="text-neutral-500 hover:text-white transition-colors p-1">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-                    </svg>
-                  </button>
-                  <button onClick={() => handleDelete(rev.id)} disabled={deleting === rev.id}
-                    className="text-neutral-500 hover:text-red-400 transition-colors p-1 disabled:opacity-30">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                    </svg>
-                  </button>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">{rev.description}</p>
-                  <p className="text-xs text-neutral-500 mt-0.5">
-                    {rev.date}{rev.banks?.name ? ` · ${rev.banks.name}` : ''}
-                  </p>
-                </div>
-                <span className="shrink-0 text-sm font-mono text-emerald-400">+₱{fmt(rev.amount)}</span>
-              </div>
-              {/* Desktop row */}
-              <div className="hidden sm:grid grid-cols-[1fr_auto_auto] gap-4 px-5 py-3.5 items-center">
-                <div className="min-w-0">
-                  <p className="text-sm text-white truncate">{rev.description}</p>
-                  <p className="text-xs text-neutral-500 mt-0.5">{rev.date}</p>
-                </div>
-                <span className="text-xs text-neutral-400 whitespace-nowrap">
-                  {rev.banks?.name || <span className="text-neutral-600">—</span>}
-                </span>
-                <div className="flex items-center gap-2 justify-end">
-                  <span className="text-sm font-mono text-emerald-400 whitespace-nowrap">+₱{fmt(rev.amount)}</span>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => setEditingRevenue(rev)} className="text-neutral-500 hover:text-white transition-colors p-1">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-                      </svg>
-                    </button>
-                    <button onClick={() => handleDelete(rev.id)} disabled={deleting === rev.id}
-                      className="text-neutral-500 hover:text-red-400 transition-colors p-1 disabled:opacity-30">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                      </svg>
-                    </button>
+          groupByDay(filtered, now).map(day => (
+            <DayGroup key={day.date} label={day.label} total={<span className="text-good">{fmtMoney(day.total, { sign: true })}</span>}>
+              {day.rows.map(r => (
+                <div key={r.id} className="group relative flex items-center gap-3 px-2 py-2 rounded-row hover:bg-sub transition-colors">
+                  <button type="button" className="md:hidden absolute inset-0 rounded-row" aria-label={`Edit ${r.description}`} onClick={() => setEditing(r)} />
+                  <span className="w-9 h-9 rounded-[12px] bg-good-bg text-good grid place-items-center shrink-0"><IncomeIcon /></span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold truncate">{r.description}</p>
+                    <p className="md:hidden text-xs text-muted truncate">{r.banks?.name}</p>
                   </div>
+                  <div className="hidden md:block shrink-0">{r.banks?.name && <BankPill name={r.banks.name} />}</div>
+                  <span className="text-sm font-bold text-good tnum w-32 text-right shrink-0">{fmtMoney(r.amount, { sign: true })}</span>
+                  <RowActions name={r.description} onEdit={() => setEditing(r)} onDelete={() => handleDelete(r.id)} deleting={deleting === r.id} />
                 </div>
-              </div>
-            </div>
+              ))}
+            </DayGroup>
           ))
         )}
-      </div>
+      </Card>
 
-      {showAdd && (
-        <Modal title="Add Revenue" onClose={() => setShowAdd(false)}>
-          <RevenueForm banks={banks} onSubmit={handleAdd} onClose={() => setShowAdd(false)} submitLabel="Save Revenue" />
-        </Modal>
-      )}
-
-      {editingRevenue && (
-        <Modal title="Edit Revenue" onClose={() => setEditingRevenue(null)}>
-          <RevenueForm initialValues={editingRevenue} banks={banks}
-            onSubmit={handleEdit} onClose={() => setEditingRevenue(null)} submitLabel="Save Changes" />
+      {editing && (
+        <Modal title="Edit revenue" onClose={() => setEditing(null)}>
+          <RevenueForm initialValues={editing} banks={banks} onSubmit={handleEdit} onClose={() => setEditing(null)}
+            onDelete={() => handleDelete(editing.id)} submitLabel="Save changes" />
         </Modal>
       )}
     </div>

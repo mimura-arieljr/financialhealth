@@ -32,8 +32,8 @@ export function BottomBar({ onSignOut }) {
         <Tab to="/" end icon={HomeIcon} label="Home" />
         <Tab to="/expenses" icon={ListIcon} label="Expenses" />
         <button type="button" aria-label="Add" onClick={() => setSheet({ type: 'add', path: pathname })}
-          className="w-12 h-12 rounded-full bg-cyan text-ink grid place-items-center">
-          <PlusIcon className="w-6 h-6" />
+          aria-expanded={open === 'add'} className="w-12 h-12 rounded-full bg-cyan text-ink grid place-items-center active:scale-95 transition-transform">
+          <PlusIcon className={`w-6 h-6 transition-transform duration-200 ${open === 'add' ? 'rotate-45' : ''}`} />
         </button>
         <Tab to="/recurring" icon={RepeatIcon} label="Recurring" />
         <button type="button" onClick={() => setSheet({ type: 'more', path: pathname })} className={tabCls(MORE_PATHS.includes(pathname))}>

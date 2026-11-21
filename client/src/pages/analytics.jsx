@@ -92,7 +92,7 @@ export default function Analytics() {
   if (loading) return <Loading />
 
   return (
-    <div>
+    <div className="motion-stagger">
       <PageHeader
         title="Analytics"
         headline={analyticsHeadline({ savingsRate, monthName: monthName(currentMonth) })}
@@ -102,7 +102,7 @@ export default function Analytics() {
         </>}
       />
 
-      <div className="grid lg:grid-cols-[1fr_1.6fr] gap-4">
+      <div className="grid lg:grid-cols-[1fr_1.6fr] gap-4 motion-stagger">
         <Card title="Savings rate" subtitle={monthName(currentMonth)}>
           {savingsRate === null ? (
             <EmptyState title="No income data this month" body="Log this month's income to see how much you're saving." />

@@ -79,7 +79,7 @@ function BanksTab({ userId }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 motion-stagger">
       <Card title="Add bank">
         <form onSubmit={handleAdd} className="grid sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
           <FieldInput label="Bank name" value={name} onChange={setName} placeholder="e.g. BPI" />
@@ -151,7 +151,7 @@ function NameListTab({ userId, table, singular, plural, placeholder, emptyBody }
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 motion-stagger">
       <Card title={`Add ${singular}`}>
         <form onSubmit={handleAdd} className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
           <FieldInput label={`${singular.charAt(0).toUpperCase()}${singular.slice(1)} name`} value={name} onChange={setName} placeholder={placeholder} />
@@ -186,7 +186,7 @@ export default function Settings() {
   if (loading || !user) return null
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl motion-stagger">
       <PageHeader title="Settings" subtitle="Manage your banks, credit cards, and categories." />
       <div className="mb-4">
         <TabBar active={activeTab} onChange={setActiveTab} />

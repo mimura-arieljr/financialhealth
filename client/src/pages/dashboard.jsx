@@ -71,7 +71,7 @@ export default function Dashboard() {
   const billsDue = data.recurring.filter(i => isDue(i, now)).length
 
   return (
-    <div>
+    <div className="motion-stagger">
       <PageHeader
         title={`${monthName(current)} so far`}
         headline={dashboardHeadline({ spent, comparison: compareMonth(data.expenses, current, now) })}
@@ -81,18 +81,18 @@ export default function Dashboard() {
         </>}
       />
 
-      <div className="grid lg:grid-cols-[1.05fr_1fr_1.1fr] gap-4">
+      <div className="grid lg:grid-cols-[1.05fr_1fr_1.1fr] gap-4 motion-stagger">
         <BalanceCard data={data} now={now} onAddExpense={() => openQuickAdd('expense')} onTransfer={() => openQuickAdd('transfer')} />
         <KpiTiles data={data} now={now} />
         <MoneyTrend data={data} now={now} />
       </div>
 
       <div className="grid lg:grid-cols-[1.05fr_2.1fr] gap-4 mt-4">
-        <div className="space-y-4 order-2 lg:order-1 min-w-0">
+        <div className="space-y-4 order-2 lg:order-1 min-w-0 motion-stagger">
           <WhereItWent expenses={data.expenses} categories={data.categories} now={now} />
           <MarkedCard expenses={data.expenses} now={now} />
         </div>
-        <div className="space-y-4 order-1 lg:order-2 min-w-0">
+        <div className="space-y-4 order-1 lg:order-2 min-w-0 motion-stagger">
           <DueSoonCard recurring={data.recurring} now={now} onPay={handlePay} paying={paying} error={payError} />
           <RecentActivity data={data} />
         </div>

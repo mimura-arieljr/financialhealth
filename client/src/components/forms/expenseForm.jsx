@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useModalClose } from '../../hooks/useModalClose'
+import { SAVED_MS } from '../ui/motion'
 import { today } from '../../lib/utils'
 import { FieldInput } from '../ui/fieldInput'
 import { FieldSelect } from '../ui/fieldSelect'
@@ -17,6 +19,8 @@ export function ExpenseForm({ initialValues, banks, creditCards, categories, onS
   const [isMarked, setIsMarked] = useState(initialValues?.is_marked || false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const close = useModalClose(onClose)
 
   const usedCard = creditCardId !== ''
 
@@ -38,8 +42,9 @@ export function ExpenseForm({ initialValues, banks, creditCards, categories, onS
       is_card_settled: usedCard ? isCardSettled : null,
       is_marked: isMarked,
     })
-    if (err) setError(err)
-    setSaving(false)
+    if (err) { setError(err); setSaving(false); return }
+    setSaved(true)
+    setTimeout(close, SAVED_MS)
   }
 
   return (
@@ -70,7 +75,7 @@ export function ExpenseForm({ initialValues, banks, creditCards, categories, onS
         <Toggle checked={isMarked} onChange={setIsMarked} label="Marked" />
       </ToggleRow>
       <ErrorBanner message={error} />
-      <FormActions onClose={onClose} saving={saving} submitLabel={submitLabel} onDelete={onDelete} />
+      <FormActions onClose={close} saving={saving} saved={saved} submitLabel={submitLabel} onDelete={onDelete} />
     </form>
   )
 }

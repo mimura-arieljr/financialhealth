@@ -60,7 +60,6 @@ export default function Transfers() {
   const handleEdit = async (values) => {
     const { error } = await supabase.from('transfers').update(values).eq('id', editing.id)
     if (error) return error.message
-    setEditing(null)
     notifySaved()
     return null
   }
@@ -79,7 +78,7 @@ export default function Transfers() {
   const label = (t) => `${t.from_bank?.name || 'Unknown bank'} to ${t.to_bank?.name || 'Unknown bank'}`
 
   return (
-    <div>
+    <div className="motion-stagger">
       <PageHeader
         title="Transfers"
         headline={loading ? null : transfersHeadline({ total, count: inMonth.length, monthName: month ? monthName(month) : null })}

@@ -41,7 +41,6 @@ export function QuickAddProvider({ children }) {
   const handleSubmit = async (values) => {
     const { error } = await supabase.from(config.table).insert({ user_id: userId, ...values })
     if (error) return error.message
-    close()
     notifySaved()
     return null
   }

@@ -2,6 +2,7 @@ const VARIANTS = {
   ink: 'bg-ink text-white hover:bg-ink/85',
   light: 'bg-sub text-ink hover:bg-line',
   cyan: 'bg-cyan text-ink hover:brightness-95',
+  good: 'bg-good text-white',
   white: 'bg-card text-ink hover:bg-sub',
   dangerLight: 'bg-sub text-alert hover:bg-alert-bg',
   dangerWhite: 'bg-card text-alert hover:bg-alert-bg',
@@ -15,7 +16,7 @@ const FOCUS = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visi
 export function Button({ variant = 'ink', size = 'md', icon, type = 'button', className = '', children, ...rest }) {
   return (
     <button type={type}
-      className={`inline-flex items-center justify-center rounded-full font-semibold whitespace-nowrap transition-colors disabled:opacity-50 disabled:pointer-events-none ${FOCUS} ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full font-semibold whitespace-nowrap transition-colors ${variant === 'good' ? '' : 'disabled:opacity-50'} disabled:pointer-events-none ${FOCUS} ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
       {...rest}>
       {icon}{children}
     </button>

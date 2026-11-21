@@ -145,3 +145,54 @@ describe('round three tweaks', () => {
     expect(s).toMatch(/export function Loading\(\{ className = 'min-h-\[60vh\]' \}\)/)
   })
 })
+
+describe('motion', () => {
+  const read = (p) => readFileSync(join(SRC, p), 'utf8')
+  const body = (src, name) => {
+    const start = src.indexOf(`const ${name} = async`)
+    return start < 0 ? '' : src.slice(start, src.indexOf('\n  }\n', start))
+  }
+
+  it('defines the motion keyframes and falls back to a fade for reduced motion', () => {
+    const css = read('index.css')
+    for (const k of ['fade-in', 'fade-out', 'sheet-in', 'sheet-out', 'dialog-in', 'dialog-out', 'rise', 'pop', 'rail-in']) {
+      expect(css).toMatch(new RegExp(`@keyframes ${k} `))
+    }
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*\.motion-panel-in/)
+  })
+
+  it('animates the modal in and out, and lets forms close it through context', () => {
+    const modal = read('components/ui/modal.jsx')
+    expect(modal).toMatch(/motion-panel-in/)
+    expect(modal).toMatch(/motion-panel-out/)
+    expect(modal).toMatch(/ModalContext\.Provider/)
+  })
+
+  it('shows a Saved tick before a form closes its modal', () => {
+    expect(read('components/forms/formActions.jsx')).toMatch(/Saved/)
+    for (const f of ['components/forms/expenseForm.jsx', 'components/forms/revenueForm.jsx', 'components/forms/transferForm.jsx', 'pages/recurring/recurringForm.jsx']) {
+      const s = read(f)
+      expect(s, f).toMatch(/useModalClose\(onClose\)/)
+      expect(s, f).toMatch(/setSaved\(true\)/)
+    }
+  })
+
+  it('leaves closing after a save to the modal so it can animate out', () => {
+    expect(body(read('components/layout/quickAdd.jsx'), 'handleSubmit')).not.toMatch(/close\(\)/)
+    for (const p of ['pages/expenses.jsx', 'pages/revenues.jsx', 'pages/transfers.jsx', 'pages/recurring.jsx']) {
+      expect(body(read(p), 'handleEdit'), p).not.toMatch(/setEditing\(null\)/)
+    }
+    expect(body(read('pages/recurring.jsx'), 'handleAdd')).not.toMatch(/setShowAdd\(false\)/)
+  })
+
+  it('animates the add options on the rail and the mobile sheet', () => {
+    expect(read('components/layout/quickRail.jsx')).toMatch(/motion-rail-in/)
+    expect(read('components/layout/sheet.jsx')).toMatch(/motion-panel-in/)
+  })
+
+  it('brings page content in with a stagger once it is ready', () => {
+    for (const p of ['pages/dashboard.jsx', 'pages/expenses.jsx', 'pages/revenues.jsx', 'pages/transfers.jsx', 'pages/recurring.jsx', 'pages/analytics.jsx', 'pages/settings.jsx']) {
+      expect(read(p), p).toMatch(/motion-stagger/)
+    }
+  })
+})

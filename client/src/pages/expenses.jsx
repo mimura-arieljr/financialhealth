@@ -182,7 +182,6 @@ export default function Expenses() {
   const handleEdit = async (values) => {
     const { error } = await supabase.from('expenses').update(values).eq('id', editing.id)
     if (error) return error.message
-    setEditing(null)
     notifySaved()
     return null
   }
@@ -262,7 +261,7 @@ export default function Expenses() {
   ].filter(Boolean)
 
   return (
-    <div>
+    <div className="motion-stagger">
       <PageHeader
         title="Expenses"
         headline={loading ? null : expensesHeadline({
@@ -278,7 +277,7 @@ export default function Expenses() {
       />
 
       {topCards.length > 0 && (
-        <div className={`flex lg:grid ${GRID_COLS[topCards.length]} gap-4 overflow-x-auto lg:overflow-visible snap-x -mx-4 px-4 lg:mx-0 lg:px-0 mb-4 [&>*]:min-w-[280px] lg:[&>*]:min-w-0 [&>*]:snap-start`}>
+        <div className={`flex lg:grid ${GRID_COLS[topCards.length]} gap-4 motion-stagger overflow-x-auto lg:overflow-visible snap-x -mx-4 px-4 lg:mx-0 lg:px-0 mb-4 [&>*]:min-w-[280px] lg:[&>*]:min-w-0 [&>*]:snap-start`}>
           {topCards}
         </div>
       )}

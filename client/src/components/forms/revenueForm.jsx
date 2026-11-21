@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useModalClose } from '../../hooks/useModalClose'
+import { SAVED_MS } from '../ui/motion'
 import { today } from '../../lib/utils'
 import { FieldInput } from '../ui/fieldInput'
 import { FieldSelect } from '../ui/fieldSelect'
@@ -12,6 +14,8 @@ export function RevenueForm({ initialValues, banks, onSubmit, onClose, onDelete,
   const [bankId, setBankId] = useState(initialValues?.bank_id || '')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const close = useModalClose(onClose)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -27,8 +31,9 @@ export function RevenueForm({ initialValues, banks, onSubmit, onClose, onDelete,
       date,
       bank_id: bankId,
     })
-    if (err) setError(err)
-    setSaving(false)
+    if (err) { setError(err); setSaving(false); return }
+    setSaved(true)
+    setTimeout(close, SAVED_MS)
   }
 
   return (
@@ -43,7 +48,7 @@ export function RevenueForm({ initialValues, banks, onSubmit, onClose, onDelete,
         {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
       </FieldSelect>
       <ErrorBanner message={error} />
-      <FormActions onClose={onClose} saving={saving} submitLabel={submitLabel} onDelete={onDelete} />
+      <FormActions onClose={close} saving={saving} saved={saved} submitLabel={submitLabel} onDelete={onDelete} />
     </form>
   )
 }

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useModalClose } from '../../hooks/useModalClose'
+import { SAVED_MS } from '../ui/motion'
 import { today } from '../../lib/utils'
 import { FieldInput } from '../ui/fieldInput'
 import { FieldSelect } from '../ui/fieldSelect'
@@ -14,6 +16,8 @@ export function TransferForm({ initialValues, banks, onSubmit, onClose, onDelete
   const [note, setNote] = useState(initialValues?.note || '')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const close = useModalClose(onClose)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -34,8 +38,9 @@ export function TransferForm({ initialValues, banks, onSubmit, onClose, onDelete
       date,
       note: note.trim() || null,
     })
-    if (err) setError(err)
-    setSaving(false)
+    if (err) { setError(err); setSaving(false); return }
+    setSaved(true)
+    setTimeout(close, SAVED_MS)
   }
 
   return (
@@ -57,7 +62,7 @@ export function TransferForm({ initialValues, banks, onSubmit, onClose, onDelete
       </div>
       <FieldInput label="Note (optional)" value={note} onChange={setNote} placeholder="e.g. Load for bills" />
       <ErrorBanner message={error} />
-      <FormActions onClose={onClose} saving={saving} submitLabel={submitLabel} onDelete={onDelete} />
+      <FormActions onClose={close} saving={saving} saved={saved} submitLabel={submitLabel} onDelete={onDelete} />
     </form>
   )
 }

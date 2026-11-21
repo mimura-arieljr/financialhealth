@@ -125,7 +125,6 @@ export default function Recurring() {
   const handleAdd = async (values) => {
     const { error } = await supabase.from('recurring_expenses').insert({ user_id: userId, ...values })
     if (error) return error.message
-    setShowAdd(false)
     notifySaved()
     return null
   }
@@ -133,7 +132,6 @@ export default function Recurring() {
   const handleEdit = async (values) => {
     const { error } = await supabase.from('recurring_expenses').update(values).eq('id', editing.id)
     if (error) return error.message
-    setEditing(null)
     notifySaved()
     return null
   }
@@ -184,7 +182,7 @@ export default function Recurring() {
   )
 
   return (
-    <div>
+    <div className="motion-stagger">
       <PageHeader
         title="Recurring"
         headline={loading ? null : recurringHeadline({ activeCount: active.length, monthlyTotal, dueCount: dueItems.length })}

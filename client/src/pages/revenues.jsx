@@ -61,7 +61,6 @@ export default function Revenues() {
   const handleEdit = async (values) => {
     const { error } = await supabase.from('revenues').update(values).eq('id', editing.id)
     if (error) return error.message
-    setEditing(null)
     notifySaved()
     return null
   }
@@ -85,7 +84,7 @@ export default function Revenues() {
   const filteredTotal = filtered.reduce((s, r) => s + Number(r.amount), 0)
 
   return (
-    <div>
+    <div className="motion-stagger">
       <PageHeader
         title="Revenues"
         headline={loading ? null : revenuesHeadline({

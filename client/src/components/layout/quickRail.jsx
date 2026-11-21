@@ -30,16 +30,16 @@ export function QuickRail({ onSignOut }) {
       <span className="group relative">
         <IconButton label={open ? 'Close add options' : 'Add'} variant="cyan" size="w-10 h-10" title={undefined}
           aria-expanded={open} aria-controls="rail-add-options" onClick={() => setOpen(o => !o)}>
-          <PlusIcon className={`w-5 h-5 transition-transform ${open ? 'rotate-45' : ''}`} />
+          <PlusIcon className={`w-5 h-5 transition-transform duration-200 ${open ? 'rotate-45' : ''}`} />
         </IconButton>
         {!open && <RailLabel>Add</RailLabel>}
       </span>
       {open && (
         <div id="rail-add-options" className="flex flex-col items-center gap-2">
-          {ACTIONS.map(action => {
+          {ACTIONS.map((action, i) => {
             const Icon = action.Icon
             return (
-              <span key={action.kind} className="group relative">
+              <span key={action.kind} className="group relative motion-rail-in" style={{ animationDelay: `${i * 45}ms` }}>
                 <IconButton label={action.label} title={undefined} size="w-10 h-10" onClick={() => add(action.kind)}><Icon className="w-[18px] h-[18px]" /></IconButton>
                 <RailLabel>{action.label}</RailLabel>
               </span>

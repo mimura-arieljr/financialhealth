@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useModalClose } from '../../hooks/useModalClose'
+import { SAVED_MS } from '../../components/ui/motion'
 import { DAYS_OF_WEEK } from '../../lib/consts'
 import { FieldInput } from '../../components/ui/fieldInput'
 import { FieldSelect } from '../../components/ui/fieldSelect'
@@ -16,6 +18,8 @@ export function RecurringForm({ initialValues, banks, creditCards, categories, o
   const [dayOfWeek, setDayOfWeek] = useState(initialValues?.day_of_week !== undefined && initialValues?.day_of_week !== null ? String(initialValues.day_of_week) : '1')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const close = useModalClose(onClose)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -35,8 +39,9 @@ export function RecurringForm({ initialValues, banks, creditCards, categories, o
       day_of_month: frequency === 'monthly' ? parseInt(dayOfMonth) : null,
       day_of_week: frequency === 'weekly' ? parseInt(dayOfWeek) : null,
     })
-    if (err) setError(err)
-    setSaving(false)
+    if (err) { setError(err); setSaving(false); return }
+    setSaved(true)
+    setTimeout(close, SAVED_MS)
   }
 
   return (
@@ -69,7 +74,7 @@ export function RecurringForm({ initialValues, banks, creditCards, categories, o
         {creditCards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
       </FieldSelect>
       <ErrorBanner message={error} />
-      <FormActions onClose={onClose} saving={saving} submitLabel={submitLabel} onDelete={onDelete} />
+      <FormActions onClose={close} saving={saving} saved={saved} submitLabel={submitLabel} onDelete={onDelete} />
     </form>
   )
 }

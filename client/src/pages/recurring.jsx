@@ -197,28 +197,28 @@ export default function Recurring() {
 
       {!loading && active.length > 0 && <div className="mb-4"><Timeline items={active} now={now} /></div>}
 
-      <Card>
-        <ErrorBanner message={payError} />
-        {loading ? (
-          <Loading />
-        ) : items.length === 0 ? (
-          <EmptyState title="No recurring expenses yet" body="Add bills and subscriptions to see what's due and pay them in one tap."
-            action={<Button icon={<PlusIcon />} onClick={() => setShowAdd(true)}>Add recurring</Button>} />
-        ) : (
-          <>
-            {/* Desktop: one attention-sorted list; mobile: needs attention, then coming up */}
-            <div className="hidden md:block">
-              {active.length > 0 && groupTitle(`Active · ${active.length}`, `≈ ${fmtPeso(monthlyTotal)} / month`)}
-              <div className="space-y-1">{active.map(row)}</div>
-            </div>
-            <div className="md:hidden">
-              {dueItems.length > 0 && <>{groupTitle('Needs attention')}<div className="space-y-1">{dueItems.map(row)}</div></>}
-              {comingUp.length > 0 && <>{groupTitle('Coming up')}<div className="space-y-1">{comingUp.map(row)}</div></>}
-            </div>
-            {paused.length > 0 && <>{groupTitle(`Paused · ${paused.length}`)}<div className="space-y-1">{paused.map(row)}</div></>}
-          </>
-        )}
-      </Card>
+      {loading ? <Loading /> : (
+        <Card>
+          <ErrorBanner message={payError} />
+          {items.length === 0 ? (
+            <EmptyState title="No recurring expenses yet" body="Add bills and subscriptions to see what's due and pay them in one tap."
+              action={<Button icon={<PlusIcon />} onClick={() => setShowAdd(true)}>Add recurring</Button>} />
+          ) : (
+            <>
+              {/* Desktop: one attention-sorted list; mobile: needs attention, then coming up */}
+              <div className="hidden md:block">
+                {active.length > 0 && groupTitle(`Active · ${active.length}`, `≈ ${fmtPeso(monthlyTotal)} / month`)}
+                <div className="space-y-1">{active.map(row)}</div>
+              </div>
+              <div className="md:hidden">
+                {dueItems.length > 0 && <>{groupTitle('Needs attention')}<div className="space-y-1">{dueItems.map(row)}</div></>}
+                {comingUp.length > 0 && <>{groupTitle('Coming up')}<div className="space-y-1">{comingUp.map(row)}</div></>}
+              </div>
+              {paused.length > 0 && <>{groupTitle(`Paused · ${paused.length}`)}<div className="space-y-1">{paused.map(row)}</div></>}
+            </>
+          )}
+        </Card>
+      )}
 
       {showAdd && (
         <Modal title="Add recurring expense" onClose={() => setShowAdd(false)}>

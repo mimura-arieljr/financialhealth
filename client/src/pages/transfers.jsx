@@ -87,38 +87,38 @@ export default function Transfers() {
         actions={<Button icon={<TransferIcon />} onClick={() => openQuickAdd('transfer')} className="max-lg:hidden">New transfer</Button>}
       />
 
-      <Card>
-        <p className="text-xs text-muted mb-4 text-right">
-          {inMonth.length} {inMonth.length === 1 ? 'transfer' : 'transfers'} · <span className="font-bold text-ink tnum">{fmtMoney(total)}</span>
-        </p>
+      {loading ? <Loading /> : (
+        <Card>
+          <p className="text-xs text-muted mb-4 text-right">
+            {inMonth.length} {inMonth.length === 1 ? 'transfer' : 'transfers'} · <span className="font-bold text-ink tnum">{fmtMoney(total)}</span>
+          </p>
 
-        {loading ? (
-          <Loading />
-        ) : inMonth.length === 0 ? (
-          transfers.length === 0
-            ? <EmptyState title="No transfers yet" body="Moving money between your banks keeps each balance right."
-                action={<Button icon={<TransferIcon />} onClick={() => openQuickAdd('transfer')}>New transfer</Button>} />
-            : <EmptyState title={`No transfers in ${monthName(month)}`} />
-        ) : (
-          groupByDay(inMonth, now).map(day => (
-            <DayGroup key={day.date} label={day.label} total={fmtMoney(day.total)}>
-              {day.rows.map(t => (
-                <div key={t.id} className="group relative flex items-center gap-3 px-2 py-2 rounded-row hover:bg-sub transition-colors">
-                  <button type="button" className="md:hidden absolute inset-0 rounded-row" aria-label={`Edit transfer ${label(t)}`} onClick={() => setEditing(t)} />
-                  <div className="flex items-center gap-1.5 min-w-0 md:w-[300px] md:shrink-0">
-                    <BankPill name={t.from_bank?.name || 'Unknown bank'} />
-                    <TransferIcon className="w-3.5 h-3.5 text-cyan-ink shrink-0" />
-                    <BankPill name={t.to_bank?.name || 'Unknown bank'} />
+          {inMonth.length === 0 ? (
+            transfers.length === 0
+              ? <EmptyState title="No transfers yet" body="Moving money between your banks keeps each balance right."
+                  action={<Button icon={<TransferIcon />} onClick={() => openQuickAdd('transfer')}>New transfer</Button>} />
+              : <EmptyState title={`No transfers in ${monthName(month)}`} />
+          ) : (
+            groupByDay(inMonth, now).map(day => (
+              <DayGroup key={day.date} label={day.label} total={fmtMoney(day.total)}>
+                {day.rows.map(t => (
+                  <div key={t.id} className="group relative flex items-center gap-3 px-2 py-2 rounded-row hover:bg-sub transition-colors">
+                    <button type="button" className="md:hidden absolute inset-0 rounded-row" aria-label={`Edit transfer ${label(t)}`} onClick={() => setEditing(t)} />
+                    <div className="flex items-center gap-1.5 min-w-0 md:w-[300px] md:shrink-0">
+                      <BankPill name={t.from_bank?.name || 'Unknown bank'} />
+                      <TransferIcon className="w-3.5 h-3.5 text-cyan-ink shrink-0" />
+                      <BankPill name={t.to_bank?.name || 'Unknown bank'} />
+                    </div>
+                    <p className={`hidden md:block flex-1 min-w-0 text-sm truncate ${t.note ? '' : 'text-faint'}`}>{t.note || 'No note'}</p>
+                    <span className="ml-auto md:ml-0 text-sm font-bold tnum w-28 text-right shrink-0">{fmtMoney(t.amount)}</span>
+                    <RowActions name={`transfer ${label(t)}`} onEdit={() => setEditing(t)} onDelete={() => handleDelete(t.id)} deleting={deleting === t.id} />
                   </div>
-                  <p className={`hidden md:block flex-1 min-w-0 text-sm truncate ${t.note ? '' : 'text-faint'}`}>{t.note || 'No note'}</p>
-                  <span className="ml-auto md:ml-0 text-sm font-bold tnum w-28 text-right shrink-0">{fmtMoney(t.amount)}</span>
-                  <RowActions name={`transfer ${label(t)}`} onEdit={() => setEditing(t)} onDelete={() => handleDelete(t.id)} deleting={deleting === t.id} />
-                </div>
-              ))}
-            </DayGroup>
-          ))
-        )}
-      </Card>
+                ))}
+              </DayGroup>
+            ))
+          )}
+        </Card>
+      )}
 
       {editing && (
         <Modal title="Edit transfer" onClose={() => setEditing(null)}>

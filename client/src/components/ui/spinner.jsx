@@ -1,5 +1,5 @@
 // Twin-orbit loader; the dots take the text colour (cyan by default)
-export function Spinner({ size = 'w-3 h-3', tone = 'text-cyan-stroke', label = 'Loading' }) {
+export function Spinner({ size = 'w-4 h-4', tone = 'text-cyan-stroke', label = 'Loading' }) {
   return (
     <span role="status" className={`relative inline-block aspect-square rounded-full bg-current ${size} ${tone}`}>
       <span aria-hidden="true" className="twin-orbit absolute inset-0 rounded-full bg-current" />
@@ -10,6 +10,6 @@ export function Spinner({ size = 'w-3 h-3', tone = 'text-cyan-stroke', label = '
 }
 
 // Centred spinner for a page or a card that is still loading
-export function Loading({ className = 'py-16' }) {
+export function Loading({ className = 'min-h-[60vh]' }) {
   return <div className={`grid place-items-center ${className}`}><Spinner /></div>
 }

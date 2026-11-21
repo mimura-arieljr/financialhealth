@@ -63,7 +63,7 @@ export default function Dashboard() {
     else notifySaved()
   }
 
-  if (!data) return <Loading className="min-h-[60vh]" />
+  if (!data) return <Loading />
 
   const current = monthKey(now)
   const spent = sumInMonth(data.expenses, current)

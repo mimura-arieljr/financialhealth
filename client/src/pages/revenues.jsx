@@ -97,41 +97,41 @@ export default function Revenues() {
         actions={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('revenue')} className="max-lg:hidden">Add revenue</Button>}
       />
 
-      <Card>
-        <div className="flex items-center gap-3 mb-4">
-          {banks.length > 0 && <FilterPill label="All banks" value={filterBank} onChange={setFilterBank} options={banks.map(b => ({ value: b.id, label: b.name }))} />}
-          <p className="ml-auto text-xs text-muted whitespace-nowrap">
-            {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'} · <span className="font-bold text-good tnum">{fmtMoney(filteredTotal, { sign: true })}</span>
-          </p>
-        </div>
+      {loading ? <Loading /> : (
+        <Card>
+          <div className="flex items-center gap-3 mb-4">
+            {banks.length > 0 && <FilterPill label="All banks" value={filterBank} onChange={setFilterBank} options={banks.map(b => ({ value: b.id, label: b.name }))} />}
+            <p className="ml-auto text-xs text-muted whitespace-nowrap">
+              {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'} · <span className="font-bold text-good tnum">{fmtMoney(filteredTotal, { sign: true })}</span>
+            </p>
+          </div>
 
-        {loading ? (
-          <Loading />
-        ) : filtered.length === 0 ? (
-          revenues.length === 0
-            ? <EmptyState title="No income logged yet" body="Add your salary or any money you receive to see it here."
-                action={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('revenue')}>Add revenue</Button>} />
-            : <EmptyState title={filterBank ? 'No entries for this bank' : `No income logged in ${monthName(month)}`} />
-        ) : (
-          groupByDay(filtered, now).map(day => (
-            <DayGroup key={day.date} label={day.label} total={<span className="text-good">{fmtMoney(day.total, { sign: true })}</span>}>
-              {day.rows.map(r => (
-                <div key={r.id} className="group relative flex items-center gap-3 px-2 py-2 rounded-row hover:bg-sub transition-colors">
-                  <button type="button" className="md:hidden absolute inset-0 rounded-row" aria-label={`Edit ${r.description}`} onClick={() => setEditing(r)} />
-                  <span className="w-9 h-9 rounded-[12px] bg-good-bg text-good grid place-items-center shrink-0"><IncomeIcon /></span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate">{r.description}</p>
-                    <p className="md:hidden text-xs text-muted truncate">{r.banks?.name}</p>
+          {filtered.length === 0 ? (
+            revenues.length === 0
+              ? <EmptyState title="No income logged yet" body="Add your salary or any money you receive to see it here."
+                  action={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('revenue')}>Add revenue</Button>} />
+              : <EmptyState title={filterBank ? 'No entries for this bank' : `No income logged in ${monthName(month)}`} />
+          ) : (
+            groupByDay(filtered, now).map(day => (
+              <DayGroup key={day.date} label={day.label} total={<span className="text-good">{fmtMoney(day.total, { sign: true })}</span>}>
+                {day.rows.map(r => (
+                  <div key={r.id} className="group relative flex items-center gap-3 px-2 py-2 rounded-row hover:bg-sub transition-colors">
+                    <button type="button" className="md:hidden absolute inset-0 rounded-row" aria-label={`Edit ${r.description}`} onClick={() => setEditing(r)} />
+                    <span className="w-9 h-9 rounded-[12px] bg-good-bg text-good grid place-items-center shrink-0"><IncomeIcon /></span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold truncate">{r.description}</p>
+                      <p className="md:hidden text-xs text-muted truncate">{r.banks?.name}</p>
+                    </div>
+                    <div className="hidden md:block shrink-0">{r.banks?.name && <BankPill name={r.banks.name} />}</div>
+                    <span className="text-sm font-bold text-good tnum w-32 text-right shrink-0">{fmtMoney(r.amount, { sign: true })}</span>
+                    <RowActions name={r.description} onEdit={() => setEditing(r)} onDelete={() => handleDelete(r.id)} deleting={deleting === r.id} />
                   </div>
-                  <div className="hidden md:block shrink-0">{r.banks?.name && <BankPill name={r.banks.name} />}</div>
-                  <span className="text-sm font-bold text-good tnum w-32 text-right shrink-0">{fmtMoney(r.amount, { sign: true })}</span>
-                  <RowActions name={r.description} onEdit={() => setEditing(r)} onDelete={() => handleDelete(r.id)} deleting={deleting === r.id} />
-                </div>
-              ))}
-            </DayGroup>
-          ))
-        )}
-      </Card>
+                ))}
+              </DayGroup>
+            ))
+          )}
+        </Card>
+      )}
 
       {editing && (
         <Modal title="Edit revenue" onClose={() => setEditing(null)}>

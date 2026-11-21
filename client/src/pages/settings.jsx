@@ -89,22 +89,23 @@ function BanksTab({ userId }) {
         <ErrorBanner message={error} />
       </Card>
 
-      <Card title="Your banks" subtitle="Balances start from the initial balance you set here">
-        {loading ? <Loading className="py-10" />
-          : banks.length === 0 ? <EmptyState title="No banks added yet" body="Add the banks and e-wallets you pay from." />
-          : (
-            <ul className="divide-y divide-line">
-              {banks.map(bank => (
-                <li key={bank.id} className="flex items-center gap-3 py-2.5">
-                  <BankAvatar name={bank.name} size="sm" />
-                  <span className="text-sm font-semibold flex-1 min-w-0 truncate">{bank.name}</span>
-                  <span className="text-sm text-muted tnum">{fmtMoney(bank.initial_balance)}</span>
-                  <DeleteButton name={bank.name} onClick={() => handleDelete(bank.id)} loading={deleting === bank.id} />
-                </li>
-              ))}
-            </ul>
-          )}
-      </Card>
+      {loading ? <Loading className="py-16" /> : (
+        <Card title="Your banks" subtitle="Balances start from the initial balance you set here">
+          {banks.length === 0 ? <EmptyState title="No banks added yet" body="Add the banks and e-wallets you pay from." />
+            : (
+              <ul className="divide-y divide-line">
+                {banks.map(bank => (
+                  <li key={bank.id} className="flex items-center gap-3 py-2.5">
+                    <BankAvatar name={bank.name} size="sm" />
+                    <span className="text-sm font-semibold flex-1 min-w-0 truncate">{bank.name}</span>
+                    <span className="text-sm text-muted tnum">{fmtMoney(bank.initial_balance)}</span>
+                    <DeleteButton name={bank.name} onClick={() => handleDelete(bank.id)} loading={deleting === bank.id} />
+                  </li>
+                ))}
+              </ul>
+            )}
+        </Card>
+      )}
     </div>
   )
 }
@@ -159,20 +160,21 @@ function NameListTab({ userId, table, singular, plural, placeholder, emptyBody }
         <ErrorBanner message={error} />
       </Card>
 
-      <Card title={`Your ${plural}`}>
-        {loading ? <Loading className="py-10" />
-          : rows.length === 0 ? <EmptyState title={`No ${plural} added yet`} body={emptyBody} />
-          : (
-            <ul className="divide-y divide-line">
-              {rows.map(row => (
-                <li key={row.id} className="flex items-center gap-3 py-2.5">
-                  <span className="text-sm font-semibold flex-1 min-w-0 truncate">{row.name}</span>
-                  <DeleteButton name={row.name} onClick={() => handleDelete(row.id)} loading={deleting === row.id} />
-                </li>
-              ))}
-            </ul>
-          )}
-      </Card>
+      {loading ? <Loading className="py-16" /> : (
+        <Card title={`Your ${plural}`}>
+          {rows.length === 0 ? <EmptyState title={`No ${plural} added yet`} body={emptyBody} />
+            : (
+              <ul className="divide-y divide-line">
+                {rows.map(row => (
+                  <li key={row.id} className="flex items-center gap-3 py-2.5">
+                    <span className="text-sm font-semibold flex-1 min-w-0 truncate">{row.name}</span>
+                    <DeleteButton name={row.name} onClick={() => handleDelete(row.id)} loading={deleting === row.id} />
+                  </li>
+                ))}
+              </ul>
+            )}
+        </Card>
+      )}
     </div>
   )
 }

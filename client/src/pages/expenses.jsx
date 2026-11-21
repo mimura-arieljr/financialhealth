@@ -283,62 +283,62 @@ export default function Expenses() {
         </div>
       )}
 
-      <Card>
-        <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-4">
-          <div className="flex items-center gap-2 overflow-x-auto -mx-5 px-5 lg:mx-0 lg:px-0 lg:flex-wrap">
-            <SearchField value={search} onChange={withReset(setSearch)} placeholder="Search expenses" className="w-44 shrink-0" />
-            {categories.length > 0 && <FilterPill label="Category" value={filterCategory} onChange={withReset(setFilterCategory)} options={categories.map(c => ({ value: c.id, label: c.name }))} />}
-            {banks.length > 0 && <FilterPill label="Bank" value={filterBank} onChange={withReset(setFilterBank)} options={banks.map(b => ({ value: b.id, label: b.name }))} />}
-            {creditCards.length > 0 && <FilterPill label="Card" value={filterCard} onChange={withReset(setFilterCard)} options={creditCards.map(c => ({ value: c.id, label: c.name }))} />}
-            <FilterPill label="Marked" value={filterMarked} onChange={withReset(setFilterMarked)} options={MARKED_OPTIONS} />
-            {hasFilters && <Button size="sm" variant="light" onClick={clearFilters} className="shrink-0">Clear</Button>}
+      {loading ? <Loading /> : (
+        <Card>
+          <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-4">
+            <div className="flex items-center gap-2 overflow-x-auto -mx-5 px-5 lg:mx-0 lg:px-0 lg:flex-wrap">
+              <SearchField value={search} onChange={withReset(setSearch)} placeholder="Search expenses" className="w-44 shrink-0" />
+              {categories.length > 0 && <FilterPill label="Category" value={filterCategory} onChange={withReset(setFilterCategory)} options={categories.map(c => ({ value: c.id, label: c.name }))} />}
+              {banks.length > 0 && <FilterPill label="Bank" value={filterBank} onChange={withReset(setFilterBank)} options={banks.map(b => ({ value: b.id, label: b.name }))} />}
+              {creditCards.length > 0 && <FilterPill label="Card" value={filterCard} onChange={withReset(setFilterCard)} options={creditCards.map(c => ({ value: c.id, label: c.name }))} />}
+              <FilterPill label="Marked" value={filterMarked} onChange={withReset(setFilterMarked)} options={MARKED_OPTIONS} />
+              {hasFilters && <Button size="sm" variant="light" onClick={clearFilters} className="shrink-0">Clear</Button>}
+            </div>
+            <p className="lg:ml-auto text-xs text-muted whitespace-nowrap">
+              {filtered.length} {filtered.length === 1 ? 'expense' : 'expenses'} · <span className="font-bold text-ink tnum">{fmtMoney(filteredTotal)}</span>
+            </p>
           </div>
-          <p className="lg:ml-auto text-xs text-muted whitespace-nowrap">
-            {filtered.length} {filtered.length === 1 ? 'expense' : 'expenses'} · <span className="font-bold text-ink tnum">{fmtMoney(filteredTotal)}</span>
-          </p>
-        </div>
 
-        {loading ? (
-          <Loading />
-        ) : filtered.length === 0 ? (
-          expenses.length === 0
-            ? <EmptyState title="No expenses yet" body="Add your first expense to start tracking where your money goes."
-                action={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('expense')}>Add expense</Button>} />
-            : <EmptyState title={hasFilters ? 'No expenses match these filters' : `No expenses in ${monthName(month)}`}
-                action={hasFilters && <Button variant="light" size="sm" onClick={clearFilters}>Clear filters</Button>} />
-        ) : (
-          groupByDay(paginated, now).map(day => (
-            <DayGroup key={day.date} label={day.label} total={fmtMoney(day.total)}>
-              {day.rows.map(e => {
-                const status = cardStatus(e)
-                const catName = e.categories?.name || 'Uncategorised'
-                const account = e.credit_cards?.name || e.banks?.name || ''
-                return (
-                  <div key={e.id} className="group relative flex items-center gap-3 px-2 py-2 rounded-row hover:bg-sub transition-colors">
-                    <button type="button" className="md:hidden absolute inset-0 rounded-row" aria-label={`Edit ${e.description}`} onClick={() => setEditing(e)} />
-                    <CategoryAvatar name={catName} color={categoryColor(colors, e.category_id)} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold truncate">{e.description}</p>
-                      <p className="hidden md:block text-xs text-muted truncate">{catName}</p>
-                      <p className="md:hidden text-xs text-muted truncate">
-                        {account} · {status.short}{e.is_marked && <> · <StarIcon className="w-3 h-3 inline -mt-0.5 text-cyan-ink" /></>}
-                      </p>
+          {filtered.length === 0 ? (
+            expenses.length === 0
+              ? <EmptyState title="No expenses yet" body="Add your first expense to start tracking where your money goes."
+                  action={<Button icon={<PlusIcon />} onClick={() => openQuickAdd('expense')}>Add expense</Button>} />
+              : <EmptyState title={hasFilters ? 'No expenses match these filters' : `No expenses in ${monthName(month)}`}
+                  action={hasFilters && <Button variant="light" size="sm" onClick={clearFilters}>Clear filters</Button>} />
+          ) : (
+            groupByDay(paginated, now).map(day => (
+              <DayGroup key={day.date} label={day.label} total={fmtMoney(day.total)}>
+                {day.rows.map(e => {
+                  const status = cardStatus(e)
+                  const catName = e.categories?.name || 'Uncategorised'
+                  const account = e.credit_cards?.name || e.banks?.name || ''
+                  return (
+                    <div key={e.id} className="group relative flex items-center gap-3 px-2 py-2 rounded-row hover:bg-sub transition-colors">
+                      <button type="button" className="md:hidden absolute inset-0 rounded-row" aria-label={`Edit ${e.description}`} onClick={() => setEditing(e)} />
+                      <CategoryAvatar name={catName} color={categoryColor(colors, e.category_id)} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold truncate">{e.description}</p>
+                        <p className="hidden md:block text-xs text-muted truncate">{catName}</p>
+                        <p className="md:hidden text-xs text-muted truncate">
+                          {account} · {status.short}{e.is_marked && <> · <StarIcon className="w-3 h-3 inline -mt-0.5 text-cyan-ink" /></>}
+                        </p>
+                      </div>
+                      <div className="hidden md:flex items-center gap-1.5 justify-end shrink-0">
+                        {e.banks?.name && <BankPill name={e.banks.name} />}
+                        <Badge tone={status.tone}>{status.label}</Badge>
+                        {e.is_marked && <Badge tone="mark">Marked</Badge>}
+                      </div>
+                      <span className="text-sm font-bold tnum w-28 text-right shrink-0">{fmtMoney(e.amount)}</span>
+                      <RowActions name={e.description} onEdit={() => setEditing(e)} onDelete={() => handleDelete(e.id)} deleting={deleting === e.id} />
                     </div>
-                    <div className="hidden md:flex items-center gap-1.5 justify-end shrink-0">
-                      {e.banks?.name && <BankPill name={e.banks.name} />}
-                      <Badge tone={status.tone}>{status.label}</Badge>
-                      {e.is_marked && <Badge tone="mark">Marked</Badge>}
-                    </div>
-                    <span className="text-sm font-bold tnum w-28 text-right shrink-0">{fmtMoney(e.amount)}</span>
-                    <RowActions name={e.description} onEdit={() => setEditing(e)} onDelete={() => handleDelete(e.id)} deleting={deleting === e.id} />
-                  </div>
-                )
-              })}
-            </DayGroup>
-          ))
-        )}
-        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-      </Card>
+                  )
+                })}
+              </DayGroup>
+            ))
+          )}
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        </Card>
+      )}
 
       {editing && (
         <Modal title="Edit expense" onClose={() => setEditing(null)}>

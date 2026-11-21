@@ -89,7 +89,7 @@ export default function Analytics() {
   const incomeData = last12.map(({ key, label }) => ({ month: label, Revenue: sumKey(revenues, key) }))
   const avgMonthlyRevenue = incomeData.reduce((s, d) => s + d.Revenue, 0) / 12
 
-  if (loading) return <Loading className="min-h-[60vh]" />
+  if (loading) return <Loading />
 
   return (
     <div>

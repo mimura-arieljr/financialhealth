@@ -127,3 +127,21 @@ describe('round two tweaks', () => {
     expect(rail.match(/openQuickAdd\(/g)).toHaveLength(1)
   })
 })
+
+describe('round three tweaks', () => {
+  const read = (p) => readFileSync(join(SRC, p), 'utf8')
+
+  it('never shows the loading spinner inside a card', () => {
+    const bad = jsxFiles(join(SRC, 'pages')).filter(f => {
+      const s = readFileSync(f, 'utf8')
+      return [...s.matchAll(/<Card[\s>][\s\S]*?<\/Card>/g)].some(m => m[0].includes('<Loading'))
+    })
+    expect(bad.map(f => f.slice(SRC.length))).toEqual([])
+  })
+
+  it('uses a larger spinner, centred in the page area by default', () => {
+    const s = read('components/ui/spinner.jsx')
+    expect(s).toMatch(/size = 'w-4 h-4'/)
+    expect(s).toMatch(/export function Loading\(\{ className = 'min-h-\[60vh\]' \}\)/)
+  })
+})

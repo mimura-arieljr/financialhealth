@@ -16,7 +16,7 @@ import Transfers from './pages/transfers'
 function AppLoading() {
   return (
     <div className="min-h-dvh grid place-items-center bg-canvas">
-      <Spinner size="w-3.5 h-3.5" />
+      <Spinner size="w-5 h-5" />
     </div>
   )
 }

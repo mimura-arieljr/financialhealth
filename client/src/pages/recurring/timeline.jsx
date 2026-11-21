@@ -1,6 +1,7 @@
 import { DAYS_OF_WEEK } from '../../lib/consts'
 import { daysInMonth, monthKey, monthName } from '../../lib/utils'
 import { recurringStatus, weekdayCountInMonth } from '../../lib/recurringStatus'
+import { labelAnchor } from '../../lib/timeline'
 import { Card } from '../../components/ui/card'
 
 const RANK = { overdue: 0, 'due-today': 0, upcoming: 1, logged: 2 }
@@ -10,6 +11,7 @@ const DOT = {
   logged: 'bg-ink',
 }
 const TICKS = [1, 5, 10, 15, 20, 25]
+const ALIGN = { start: 'items-start text-left', center: 'items-center text-center', end: 'items-end text-right' }
 
 function Legend() {
   const item = (cls, label) => (
@@ -51,13 +53,17 @@ export function Timeline({ items, now }) {
     <Card title={`${monthName(key)} at a glance`} subtitle="Monthly items on their due day; weekly items as a count" action={<Legend />}
       className="max-lg:hidden">
       <div className="relative h-40 mx-4 mt-2">
-        {placed.map(p => (
-          <div key={p.day} className="absolute top-0 h-[84px] -translate-x-1/2 flex flex-col items-center justify-end" style={{ left: pos(p.day), paddingBottom: p.level * 18 }}>
+        {placed.map(p => {
+          const anchor = labelAnchor(p.day, days)
+          return (
+          <div key={p.day} className={`absolute top-0 h-[84px] flex flex-col justify-end ${ALIGN[anchor.align]}`}
+            style={{ left: pos(p.day), transform: anchor.transform, paddingBottom: p.level * 18 }}>
             {p.list.map(x => (
               <span key={x.item.id} className="text-[11px] font-semibold leading-4 max-w-24 truncate">{x.item.description}</span>
             ))}
           </div>
-        ))}
+          )
+        })}
         <div className="absolute inset-x-0 top-[92px] h-2 rounded-full bg-sub">
           <div className="h-full rounded-full bg-cyan-chart/50" style={{ width: pos(today) }} />
         </div>

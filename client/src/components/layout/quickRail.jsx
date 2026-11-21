@@ -12,7 +12,7 @@ const ACTIONS = [
 // Name shown beside a rail button on hover or keyboard focus
 function RailLabel({ children }) {
   return (
-    <span aria-hidden="true" className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 bg-ink text-white text-xs font-semibold rounded-full px-2.5 py-1 whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+    <span aria-hidden="true" className="pointer-events-none absolute z-10 left-full top-1/2 -translate-y-1/2 ml-3 bg-ink text-white text-xs font-semibold rounded-full px-2.5 py-1 whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
       {children}
     </span>
   )
@@ -26,7 +26,7 @@ export function QuickRail({ onSignOut }) {
 
   return (
     <aside aria-label="Quick actions" onKeyDown={e => { if (e.key === 'Escape') setOpen(false) }}
-      className="hidden lg:flex flex-col items-center gap-2 bg-card rounded-full py-2.5 w-14 self-start sticky top-6 shrink-0">
+      className="hidden lg:flex flex-col items-center gap-2 bg-card rounded-full py-2.5 w-14 self-start sticky top-6 shrink-0 z-30">
       <span className="group relative">
         <IconButton label={open ? 'Close add options' : 'Add'} variant="cyan" size="w-10 h-10" title={undefined}
           aria-expanded={open} aria-controls="rail-add-options" onClick={() => setOpen(o => !o)}>

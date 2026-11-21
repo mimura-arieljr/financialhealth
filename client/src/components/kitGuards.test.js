@@ -196,3 +196,13 @@ describe('motion', () => {
     }
   })
 })
+
+describe('rail labels', () => {
+  it('stack above page content so hover labels are never covered', () => {
+    const rail = classNames(readFileSync(join(SRC, 'components/layout/quickRail.jsx'), 'utf8'))
+    const aside = rail.find(c => c.tag === 'aside')
+    const label = rail.find(c => c.value.includes('left-full'))
+    expect(hasToken(aside.value, /^z-\d+$/)).toBe(true)
+    expect(hasToken(label.value, /^z-\d+$/)).toBe(true)
+  })
+})

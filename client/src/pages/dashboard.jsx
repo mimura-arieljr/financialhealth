@@ -88,11 +88,11 @@ export default function Dashboard() {
       </div>
 
       <div className="grid lg:grid-cols-[1.05fr_2.1fr] gap-4 mt-4">
-        <div className="space-y-4 order-2 lg:order-1 min-w-0 motion-stagger">
+        <div className="space-y-4 order-2 lg:order-1 min-w-0 motion-stagger lg:flex lg:flex-col lg:[&>*:last-child]:flex-1">
           <WhereItWent expenses={data.expenses} categories={data.categories} now={now} />
           <MarkedCard expenses={data.expenses} now={now} />
         </div>
-        <div className="space-y-4 order-1 lg:order-2 min-w-0 motion-stagger">
+        <div className="space-y-4 order-1 lg:order-2 min-w-0 motion-stagger lg:flex lg:flex-col lg:[&>*:last-child]:flex-1">
           <DueSoonCard recurring={data.recurring} now={now} onPay={handlePay} paying={paying} error={payError} />
           <RecentActivity data={data} />
         </div>

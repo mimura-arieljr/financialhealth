@@ -244,9 +244,33 @@ describe('confirm modal and slower motion', () => {
     expect(EXIT_MS).toBeGreaterThanOrEqual(260)
     expect(SAVED_MS).toBeGreaterThanOrEqual(900)
     const css = read('index.css')
-    expect(ms(css, '\\.motion-stagger > :not\\(\\[role="dialog"\\]\\) \\{ animation: rise')).toBeGreaterThanOrEqual(650)
-    expect(ms(css, '\\.motion-stagger > :nth-child\\(2\\)')).toBeGreaterThanOrEqual(110)
+    expect(ms(css, '\\.motion-stagger > \\[data-revealed\\] \\{ animation: rise')).toBeGreaterThanOrEqual(650)
     expect(ms(css, '\\.motion-panel-in \\{ animation: dialog-in')).toBeGreaterThanOrEqual(380)
     expect(ms(css, '\\.motion-rail-in')).toBeGreaterThanOrEqual(320)
+  })
+})
+
+describe('scroll reveal and dashboard columns', () => {
+  const read = (p) => readFileSync(join(SRC, p), 'utf8')
+
+  it('reveals staggered content as it scrolls into view, one after another', () => {
+    const hook = read('hooks/useScrollReveal.js')
+    expect(hook).toMatch(/IntersectionObserver/)
+    expect(hook).toMatch(/MutationObserver/)
+    expect(Number(/\* (\d+)\}ms/.exec(hook)?.[1])).toBeGreaterThanOrEqual(110)
+    expect(read('components/layout/layout.jsx')).toMatch(/useScrollReveal\(/)
+  })
+
+  it('hides content before reveal only when the observer is running', () => {
+    const css = read('index.css')
+    expect(css).toMatch(/\.reveal-ready \.motion-stagger > :not\(\[role="dialog"\]\):not\(\[data-revealed\]\) \{ opacity: 0; \}/)
+    expect(css).not.toMatch(/:nth-child\(2\) \{ animation-delay/)
+  })
+
+  it('ends both dashboard columns level and keeps recent activity compact', () => {
+    const cols = classNames(read('pages/dashboard.jsx')).filter(c => c.value.includes('space-y-4 order-'))
+    expect(cols).toHaveLength(2)
+    for (const c of cols) expect(c.value).toMatch(/lg:\[&>\*:last-child\]:flex-1/)
+    expect(read('pages/dashboard/recentActivity.jsx')).toMatch(/\.slice\(0, 5\)/)
   })
 })

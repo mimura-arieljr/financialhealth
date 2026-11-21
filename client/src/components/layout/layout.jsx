@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
+import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useAuth } from '../../hooks/useAuth'
 import { QuickAddProvider } from './quickAdd'
 import { ConfirmProvider } from '../ui/confirmDialog'
@@ -10,6 +12,8 @@ import { BottomBar } from './bottomBar'
 export default function Layout() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
+  const mainRef = useRef(null)
+  useScrollReveal(mainRef)
 
   const handleSignOut = async () => {
     await signOut()
@@ -24,7 +28,7 @@ export default function Layout() {
           <TopBar email={user?.email} />
           <div className="max-w-[1320px] mx-auto px-4 lg:px-6 flex gap-5 pb-28 lg:pb-12">
             <QuickRail onSignOut={handleSignOut} />
-            <main className="flex-1 min-w-0">
+            <main ref={mainRef} className="flex-1 min-w-0">
               <Outlet />
             </main>
           </div>

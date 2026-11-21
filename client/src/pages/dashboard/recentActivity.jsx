@@ -35,7 +35,7 @@ export function RecentActivity({ data }) {
   const rows = buildActivity(data)
     .filter(r => !type || r.type === type)
     .filter(r => !q || [r.description, r.note, r.account].some(v => v?.toLowerCase().includes(q)))
-    .slice(0, 6)
+    .slice(0, 5)
 
   const controls = (
     <div className="flex items-center gap-2">
@@ -71,7 +71,7 @@ export function RecentActivity({ data }) {
             <tbody>
               {rows.map(r => (
                 <tr key={r.key}>
-                  <td className="py-2.5 px-3 border-b border-line">
+                  <td className="py-2 px-3 border-b border-line">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <RowIcon row={r} colors={colors} />
                       <div className="min-w-0">
@@ -80,17 +80,17 @@ export function RecentActivity({ data }) {
                       </div>
                     </div>
                   </td>
-                  <td className="py-2.5 px-3 border-b border-line text-[#374151] truncate">{r.category}</td>
-                  <td className="py-2.5 px-3 border-b border-line text-[#374151] truncate">{r.account}</td>
-                  <td className="py-2.5 px-3 border-b border-line text-muted whitespace-nowrap">{fmtDayMonth(r.date)}</td>
-                  <td className="py-2.5 px-3 border-b border-line text-right font-bold whitespace-nowrap"><Amount row={r} /></td>
+                  <td className="py-2 px-3 border-b border-line text-[#374151] truncate">{r.category}</td>
+                  <td className="py-2 px-3 border-b border-line text-[#374151] truncate">{r.account}</td>
+                  <td className="py-2 px-3 border-b border-line text-muted whitespace-nowrap">{fmtDayMonth(r.date)}</td>
+                  <td className="py-2 px-3 border-b border-line text-right font-bold whitespace-nowrap"><Amount row={r} /></td>
                 </tr>
               ))}
             </tbody>
           </table>
           <ul className="md:hidden divide-y divide-line">
             {rows.map(r => (
-              <li key={r.key} className="flex items-center gap-3 py-2.5">
+              <li key={r.key} className="flex items-center gap-3 py-2">
                 <RowIcon row={r} colors={colors} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold truncate">{r.description}</p>

@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { useQuickAdd } from '../hooks/useQuickAdd'
+import { useConfirm } from '../hooks/useConfirm'
+import { deletePrompt } from '../components/ui/confirmContext'
 import { compareMonth } from '../lib/finance'
 import { revenuesHeadline } from '../lib/headlines'
 import { groupByDay } from '../lib/grouping'
@@ -26,6 +28,7 @@ export default function Revenues() {
   const { user } = useAuth()
   const userId = user?.id
   const { openQuickAdd, dataVersion, notifySaved } = useQuickAdd()
+  const confirm = useConfirm()
   const now = useMemo(() => new Date(), [])
 
   const [banks, setBanks] = useState([])
@@ -66,12 +69,12 @@ export default function Revenues() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this revenue entry?')) return
+    if (!(await confirm(deletePrompt('revenue entry', revenues.find(r => r.id === id)?.description)))) return false
     setDeleting(id)
     await supabase.from('revenues').delete().eq('id', id)
     setDeleting(null)
-    setEditing(null)
     notifySaved()
+    return true
   }
 
   const inMonth = month ? revenues.filter(r => r.date?.slice(0, 7) === month) : revenues

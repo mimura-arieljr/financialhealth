@@ -1,6 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { QuickAddProvider } from './quickAdd'
+import { ConfirmProvider } from '../ui/confirmDialog'
 import { ShellSlotProvider } from './shellSlot'
 import { TopBar } from './topBar'
 import { QuickRail } from './quickRail'
@@ -17,6 +18,7 @@ export default function Layout() {
 
   return (
     <ShellSlotProvider>
+      <ConfirmProvider>
       <QuickAddProvider>
         <div className="min-h-dvh bg-canvas">
           <TopBar email={user?.email} />
@@ -29,6 +31,7 @@ export default function Layout() {
           <BottomBar onSignOut={handleSignOut} />
         </div>
       </QuickAddProvider>
+      </ConfirmProvider>
     </ShellSlotProvider>
   )
 }

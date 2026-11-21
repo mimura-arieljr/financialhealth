@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { invalidateTable } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
+import { useConfirm } from '../hooks/useConfirm'
+import { deletePrompt } from '../components/ui/confirmContext'
 import { fmtMoney } from '../lib/utils'
 import { ErrorBanner } from '../components/ui/errorBanner'
 import { PageHeader } from '../components/ui/pageHeader'
@@ -40,6 +42,7 @@ function BanksTab({ userId }) {
   const [banks, setBanks] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(null)
+  const confirm = useConfirm()
   const [name, setName] = useState('')
   const [initialBalance, setInitialBalance] = useState('')
   const [error, setError] = useState('')
@@ -71,6 +74,7 @@ function BanksTab({ userId }) {
   }
 
   const handleDelete = async (id) => {
+    if (!(await confirm(deletePrompt('bank', banks.find(b => b.id === id)?.name)))) return
     setDeleting(id)
     const { error } = await supabase.from('banks').delete().eq('id', id)
     if (error) setError(error.message)
@@ -115,6 +119,7 @@ function NameListTab({ userId, table, singular, plural, placeholder, emptyBody }
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(null)
+  const confirm = useConfirm()
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [adding, setAdding] = useState(false)
@@ -143,6 +148,7 @@ function NameListTab({ userId, table, singular, plural, placeholder, emptyBody }
   }
 
   const handleDelete = async (id) => {
+    if (!(await confirm(deletePrompt(singular, rows.find(r => r.id === id)?.name)))) return
     setDeleting(id)
     const { error } = await supabase.from(table).delete().eq('id', id)
     if (error) setError(error.message)

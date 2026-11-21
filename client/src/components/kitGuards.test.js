@@ -206,3 +206,47 @@ describe('rail labels', () => {
     expect(hasToken(label.value, /^z-\d+$/)).toBe(true)
   })
 })
+
+describe('confirm modal and slower motion', () => {
+  const read = (p) => readFileSync(join(SRC, p), 'utf8')
+  const ms = (css, sel) => Number(new RegExp(`${sel}[^}]*?(\\d+)ms`).exec(css)?.[1])
+
+  it('never uses the browser confirm alert', () => {
+    const bad = jsxFiles(SRC).filter(f => /(?<![\w.])confirm\(\s*['"`]/.test(readFileSync(f, 'utf8')))
+    expect(bad.map(f => f.slice(SRC.length))).toEqual([])
+  })
+
+  it('provides one confirm modal for the whole app', () => {
+    expect(read('components/layout/layout.jsx')).toMatch(/<ConfirmProvider>/)
+    expect(read('components/ui/confirmDialog.jsx')).toMatch(/export function ConfirmProvider/)
+  })
+
+  it('asks before deleting banks, cards and categories in Settings', () => {
+    expect(read('pages/settings.jsx').match(/await confirm\(/g)).toHaveLength(2)
+  })
+
+  it('closes the edit modal with its animation after a confirmed delete', () => {
+    expect(read('components/forms/formActions.jsx')).toMatch(/await onDelete\(\)/)
+    for (const p of ['pages/expenses.jsx', 'pages/revenues.jsx', 'pages/transfers.jsx', 'pages/recurring.jsx']) {
+      const s = read(p)
+      const body = s.slice(s.indexOf('const handleDelete = async'), s.indexOf('\n  }\n', s.indexOf('const handleDelete = async')))
+      expect(body, p).not.toMatch(/setEditing\(null\)/)
+      expect(body, p).toMatch(/return true/)
+    }
+  })
+
+  it('lets only the top modal answer Escape when two are open', () => {
+    expect(read('components/ui/modal.jsx')).toMatch(/querySelectorAll\('\[role="dialog"\]'\)/)
+  })
+
+  it('runs animations long enough to notice', async () => {
+    const { EXIT_MS, SAVED_MS } = await import('./ui/motion.js')
+    expect(EXIT_MS).toBeGreaterThanOrEqual(260)
+    expect(SAVED_MS).toBeGreaterThanOrEqual(900)
+    const css = read('index.css')
+    expect(ms(css, '\\.motion-stagger > :not\\(\\[role="dialog"\\]\\) \\{ animation: rise')).toBeGreaterThanOrEqual(650)
+    expect(ms(css, '\\.motion-stagger > :nth-child\\(2\\)')).toBeGreaterThanOrEqual(110)
+    expect(ms(css, '\\.motion-panel-in \\{ animation: dialog-in')).toBeGreaterThanOrEqual(380)
+    expect(ms(css, '\\.motion-rail-in')).toBeGreaterThanOrEqual(320)
+  })
+})

@@ -3,10 +3,12 @@ import { TrashIcon, CheckIcon } from '../ui/icons'
 
 // Footer shared by the add/edit forms; Delete shows only when editing
 export function FormActions({ onClose, saving, saved = false, submitLabel, onDelete }) {
+  // onDelete resolves true once the row is gone
+  const handleDelete = async () => { if (await onDelete()) onClose() }
   return (
     <div className="flex items-center gap-2 pt-2">
       {onDelete && (
-        <Button variant="dangerLight" onClick={onDelete} icon={<TrashIcon />}>
+        <Button variant="dangerLight" onClick={handleDelete} icon={<TrashIcon />}>
           Delete
         </Button>
       )}

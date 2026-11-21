@@ -3,12 +3,14 @@ import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { useQuickAdd } from '../hooks/useQuickAdd'
+import { useConfirm } from '../hooks/useConfirm'
+import { deletePrompt } from '../components/ui/confirmContext'
 import { logRecurringExpense } from '../lib/recurring'
 import { cardDebt, categoryTotals } from '../lib/finance'
 import { expensesHeadline } from '../lib/headlines'
 import { groupByDay } from '../lib/grouping'
 import { categoryColorMap, categoryColor } from '../lib/palette'
-import { fmt, fmtMoney, fmtPeso, isDue, monthKey, monthName, monthOptions } from '../lib/utils'
+import { fmtMoney, fmtPeso, isDue, monthKey, monthName, monthOptions } from '../lib/utils'
 import { Modal } from '../components/ui/modal'
 import { Card } from '../components/ui/card'
 import { Button, IconButton } from '../components/ui/button'
@@ -60,9 +62,16 @@ function DueToLog({ items, onLog, onDismiss, logging }) {
 }
 
 function UnpaidCards({ cards, onSettle, settling }) {
-  const confirmSettle = (cc) => {
+  const confirm = useConfirm()
+  const confirmSettle = async (cc) => {
     const n = cc.items.length
-    if (confirm(`Mark all ${cc.name} charges as settled?\n\n₱${fmt(cc.total)} across ${n} expense${n !== 1 ? 's' : ''}`)) onSettle(cc.id)
+    const ok = await confirm({
+      title: `Settle ${cc.name}?`,
+      body: `This marks ${n} ${n === 1 ? 'charge' : 'charges'} totalling ${fmtMoney(cc.total)} as paid off.`,
+      confirmLabel: 'Settle all',
+      tone: 'ink',
+    })
+    if (ok) onSettle(cc.id)
   }
   return (
     <Card title="Unpaid card charges" subtitle="Charges not yet paid off">
@@ -113,6 +122,7 @@ export default function Expenses() {
   const { user } = useAuth()
   const userId = user?.id
   const { openQuickAdd, dataVersion, notifySaved } = useQuickAdd()
+  const confirm = useConfirm()
   const now = useMemo(() => new Date(), [])
 
   const [banks, setBanks] = useState([])
@@ -187,12 +197,12 @@ export default function Expenses() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this expense?')) return
+    if (!(await confirm(deletePrompt('expense', expenses.find(e => e.id === id)?.description)))) return false
     setDeleting(id)
     await supabase.from('expenses').delete().eq('id', id)
     setDeleting(null)
-    setEditing(null)
     notifySaved()
+    return true
   }
 
   const handleLogDue = async (item) => {

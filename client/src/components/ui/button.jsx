@@ -3,6 +3,7 @@ const VARIANTS = {
   light: 'bg-sub text-ink hover:bg-line',
   cyan: 'bg-cyan text-ink hover:brightness-95',
   good: 'bg-good text-white',
+  danger: 'bg-alert text-white hover:bg-alert/90',
   white: 'bg-card text-ink hover:bg-sub',
   dangerLight: 'bg-sub text-alert hover:bg-alert-bg',
   dangerWhite: 'bg-card text-alert hover:bg-alert-bg',

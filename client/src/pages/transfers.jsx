@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { useQuickAdd } from '../hooks/useQuickAdd'
+import { useConfirm } from '../hooks/useConfirm'
+import { deletePrompt } from '../components/ui/confirmContext'
 import { transfersHeadline } from '../lib/headlines'
 import { groupByDay } from '../lib/grouping'
 import { fmtMoney, monthKey, monthName, monthOptions } from '../lib/utils'
@@ -23,6 +25,7 @@ export default function Transfers() {
   const { user } = useAuth()
   const userId = user?.id
   const { openQuickAdd, dataVersion, notifySaved } = useQuickAdd()
+  const confirm = useConfirm()
   const now = useMemo(() => new Date(), [])
 
   const [banks, setBanks] = useState([])
@@ -65,12 +68,13 @@ export default function Transfers() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this transfer?')) return
+    const t = transfers.find(x => x.id === id)
+    if (!(await confirm(deletePrompt('transfer', t && label(t))))) return false
     setDeleting(id)
     await supabase.from('transfers').delete().eq('id', id)
     setDeleting(null)
-    setEditing(null)
     notifySaved()
+    return true
   }
 
   const inMonth = month ? transfers.filter(t => t.date?.slice(0, 7) === month) : transfers

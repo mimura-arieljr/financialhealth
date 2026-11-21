@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase'
 import { fetchCached } from '../lib/cache'
 import { useAuth } from '../hooks/useAuth'
 import { useQuickAdd } from '../hooks/useQuickAdd'
+import { useConfirm } from '../hooks/useConfirm'
+import { deletePrompt } from '../components/ui/confirmContext'
 import { logRecurringExpense } from '../lib/recurring'
 import { DAYS_OF_WEEK } from '../lib/consts'
 import { recurringStatus, daysUntil, monthlyEquivalent, sortByAttention } from '../lib/recurringStatus'
@@ -77,6 +79,7 @@ export default function Recurring() {
   const { user } = useAuth()
   const userId = user?.id
   const { dataVersion, notifySaved } = useQuickAdd()
+  const confirm = useConfirm()
   const now = useMemo(() => new Date(), [])
 
   const [banks, setBanks] = useState([])
@@ -137,12 +140,12 @@ export default function Recurring() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this recurring expense?')) return
+    if (!(await confirm(deletePrompt('recurring expense', items.find(i => i.id === id)?.description)))) return false
     setDeleting(id)
     await supabase.from('recurring_expenses').delete().eq('id', id)
     setDeleting(null)
-    setEditing(null)
     notifySaved()
+    return true
   }
 
   const handleToggle = async (item) => {

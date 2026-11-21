@@ -9,7 +9,7 @@ import { Card } from '../components/ui/card'
 import { Chip } from '../components/ui/pill'
 import { PageHeader } from '../components/ui/pageHeader'
 import { EmptyState } from '../components/ui/emptyState'
-import { Skeleton } from '../components/ui/skeleton'
+import { Loading } from '../components/ui/spinner'
 import { Ring } from '../components/charts/ring'
 import { AreaTrend } from '../components/charts/areaTrend'
 import { BarSeries } from '../components/charts/barSeries'
@@ -89,15 +89,7 @@ export default function Analytics() {
   const incomeData = last12.map(({ key, label }) => ({ month: label, Revenue: sumKey(revenues, key) }))
   const avgMonthlyRevenue = incomeData.reduce((s, d) => s + d.Revenue, 0) / 12
 
-  if (loading) {
-    return (
-      <div>
-        <Skeleton className="h-10 w-48 mb-3" />
-        <Skeleton className="h-5 w-96 max-w-full mb-6" />
-        <div className="grid lg:grid-cols-2 gap-4"><Skeleton className="h-72 rounded-card" /><Skeleton className="h-72 rounded-card" /></div>
-      </div>
-    )
-  }
+  if (loading) return <Loading className="min-h-[60vh]" />
 
   return (
     <div>

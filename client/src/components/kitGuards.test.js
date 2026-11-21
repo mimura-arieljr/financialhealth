@@ -97,3 +97,33 @@ describe('layout guards for the final review findings', () => {
     expect(read('pages/analytics.jsx')).not.toMatch(/netWorthChange < 0 \? 'alert'/)
   })
 })
+
+describe('round two tweaks', () => {
+  const read = (p) => readFileSync(join(SRC, p), 'utf8')
+
+  it('shows the spinner, not skeletons, while pages load', () => {
+    const importers = jsxFiles(SRC).filter(f => /from '[^']*\/skeleton'/.test(readFileSync(f, 'utf8')))
+    expect(importers.map(f => f.slice(SRC.length))).toEqual([])
+    expect(read('components/ui/spinner.jsx')).toMatch(/export function Spinner/)
+  })
+
+  it('does not wrap the login logo in a white pill', () => {
+    const logo = classNames(read('pages/login.jsx')).find(c => c.value.includes('font-bold') && c.value.includes('tracking-tight') && c.value.includes('items-center'))
+    expect(hasToken(logo.value, /^bg-card$/)).toBe(false)
+  })
+
+  it('lets stat tile labels wrap instead of truncating', () => {
+    const label = classNames(read('components/ui/statTile.jsx')).find(c => c.tag === 'span' && !c.value.includes('rounded-full'))
+    expect(hasToken(label.value, /^truncate$/)).toBe(false)
+  })
+
+  it('renders header chips as plain text, not white pills', () => {
+    expect(read('components/ui/pill.jsx')).not.toMatch(/bg-card rounded-full px-3 h-8/)
+  })
+
+  it('folds the three add actions on the desktop rail behind one Add toggle', () => {
+    const rail = read('components/layout/quickRail.jsx')
+    expect(rail).toMatch(/aria-expanded=\{open\}/)
+    expect(rail.match(/openQuickAdd\(/g)).toHaveLength(1)
+  })
+})

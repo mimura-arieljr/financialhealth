@@ -9,7 +9,7 @@ import { dashboardHeadline } from '../lib/headlines'
 import { fmtPeso, isDue, monthKey, monthName } from '../lib/utils'
 import { PageHeader } from '../components/ui/pageHeader'
 import { Chip } from '../components/ui/pill'
-import { Skeleton } from '../components/ui/skeleton'
+import { Loading } from '../components/ui/spinner'
 import { BalanceCard } from './dashboard/balanceCard'
 import { KpiTiles } from './dashboard/kpiTiles'
 import { MoneyTrend } from './dashboard/moneyTrend'
@@ -18,19 +18,6 @@ import { MarkedCard } from './dashboard/markedCard'
 import { DueSoonCard } from './dashboard/dueSoonCard'
 import { RecentActivity } from './dashboard/recentActivity'
 
-function DashboardSkeleton() {
-  return (
-    <div>
-      <Skeleton className="h-10 w-64 mb-3" />
-      <Skeleton className="h-5 w-96 max-w-full mb-6" />
-      <div className="grid lg:grid-cols-[1.05fr_1fr_1.1fr] gap-4">
-        <Skeleton className="h-80 rounded-card" />
-        <Skeleton className="h-80 rounded-card" />
-        <Skeleton className="h-80 rounded-card" />
-      </div>
-    </div>
-  )
-}
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -76,7 +63,7 @@ export default function Dashboard() {
     else notifySaved()
   }
 
-  if (!data) return <DashboardSkeleton />
+  if (!data) return <Loading className="min-h-[60vh]" />
 
   const current = monthKey(now)
   const spent = sumInMonth(data.expenses, current)

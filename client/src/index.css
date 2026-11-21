@@ -59,3 +59,18 @@ body {
   background-position: right 0.75rem center;
   background-size: 1rem;
 }
+
+/* Twin-orbit spinner: two dots circle the centre dot, half a turn apart */
+@keyframes twin-orbit {
+  100% { transform: rotate(360deg) translate(155%); }
+}
+.twin-orbit {
+  transform: rotate(0deg) translate(155%);
+  animation: twin-orbit var(--duration, 1s) ease infinite;
+}
+.twin-orbit-late {
+  animation-delay: calc(var(--duration, 1s) / 2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .twin-orbit { animation-duration: 2.4s; }
+}

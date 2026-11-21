@@ -19,7 +19,7 @@ import { FilterPill } from '../components/ui/filterPill'
 import { SearchField } from '../components/ui/searchField'
 import { DayGroup } from '../components/ui/dayGroup'
 import { EmptyState } from '../components/ui/emptyState'
-import { Skeleton } from '../components/ui/skeleton'
+import { Loading } from '../components/ui/spinner'
 import { Pagination } from '../components/ui/pagination'
 import { RowActions } from '../components/ui/rowActions'
 import { BankPill, CategoryAvatar } from '../components/ui/avatar'
@@ -299,7 +299,7 @@ export default function Expenses() {
         </div>
 
         {loading ? (
-          <div className="space-y-2">{Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-14" />)}</div>
+          <Loading />
         ) : filtered.length === 0 ? (
           expenses.length === 0
             ? <EmptyState title="No expenses yet" body="Add your first expense to start tracking where your money goes."

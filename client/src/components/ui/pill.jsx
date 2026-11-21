@@ -21,11 +21,11 @@ export function Badge({ tone = 'neutral', className = '', children }) {
 
 const DOTS = { good: 'bg-good', alert: 'bg-alert', warn: 'bg-warn', cyan: 'bg-cyan-stroke', ink: 'bg-ink', neutral: 'bg-faint' }
 
-// White pill with a coloured dot; becomes a link when `to` is set
+// Dot plus text, no pill, so it reads as a fact rather than a button; links when `to` is set
 export function Chip({ dot = 'ink', to, children }) {
-  const cls = 'inline-flex items-center gap-2 bg-card rounded-full px-3 h-8 text-xs font-semibold whitespace-nowrap'
+  const cls = 'inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#374151] whitespace-nowrap'
   const body = <><span className={`w-2 h-2 rounded-full ${DOTS[dot]}`} />{children}</>
-  if (to) return <Link to={to} className={`${cls} hover:bg-sub transition-colors`}>{body}</Link>
+  if (to) return <Link to={to} className={`${cls} hover:text-ink hover:underline underline-offset-4`}>{body}</Link>
   return <span className={cls}>{body}</span>
 }
 

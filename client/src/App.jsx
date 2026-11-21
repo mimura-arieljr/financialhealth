@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
+import { Spinner } from './components/ui/spinner'
 import Layout from './components/layout/layout'
 import Login from './pages/login'
 import Dashboard from './pages/dashboard'
@@ -14,8 +15,8 @@ import Transfers from './pages/transfers'
 // Light splash while the session loads
 function AppLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-canvas" aria-label="Loading">
-      <img src="/fundora_logo.svg" alt="" className="w-10 h-10 animate-pulse" />
+    <div className="min-h-dvh grid place-items-center bg-canvas">
+      <Spinner size="w-3.5 h-3.5" />
     </div>
   )
 }

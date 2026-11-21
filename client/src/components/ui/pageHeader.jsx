@@ -20,7 +20,7 @@ export function PageHeader({ title, headline, subtitle, chips, month, actions })
           </p>
         )}
         {subtitle && <p className="text-muted text-sm mt-1.5">{subtitle}</p>}
-        {chips && <div className="flex flex-wrap gap-2 mt-3">{chips}</div>}
+        {chips && <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2.5">{chips}</div>}
       </div>
       {((month && !portalMonth) || actions) && (
         <div className="flex items-center gap-2 shrink-0 flex-wrap">

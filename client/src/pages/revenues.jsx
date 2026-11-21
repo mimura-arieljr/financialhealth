@@ -16,7 +16,7 @@ import { MonthSwitcher } from '../components/ui/monthSwitcher'
 import { FilterPill } from '../components/ui/filterPill'
 import { DayGroup } from '../components/ui/dayGroup'
 import { EmptyState } from '../components/ui/emptyState'
-import { Skeleton } from '../components/ui/skeleton'
+import { Loading } from '../components/ui/spinner'
 import { RowActions } from '../components/ui/rowActions'
 import { BankPill } from '../components/ui/avatar'
 import { IncomeIcon, PlusIcon } from '../components/ui/icons'
@@ -106,7 +106,7 @@ export default function Revenues() {
         </div>
 
         {loading ? (
-          <div className="space-y-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14" />)}</div>
+          <Loading />
         ) : filtered.length === 0 ? (
           revenues.length === 0
             ? <EmptyState title="No income logged yet" body="Add your salary or any money you receive to see it here."

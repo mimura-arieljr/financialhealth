@@ -13,7 +13,7 @@ import { PageHeader } from '../components/ui/pageHeader'
 import { MonthSwitcher } from '../components/ui/monthSwitcher'
 import { DayGroup } from '../components/ui/dayGroup'
 import { EmptyState } from '../components/ui/emptyState'
-import { Skeleton } from '../components/ui/skeleton'
+import { Loading } from '../components/ui/spinner'
 import { RowActions } from '../components/ui/rowActions'
 import { BankPill } from '../components/ui/avatar'
 import { TransferIcon } from '../components/ui/icons'
@@ -93,7 +93,7 @@ export default function Transfers() {
         </p>
 
         {loading ? (
-          <div className="space-y-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14" />)}</div>
+          <Loading />
         ) : inMonth.length === 0 ? (
           transfers.length === 0
             ? <EmptyState title="No transfers yet" body="Moving money between your banks keeps each balance right."

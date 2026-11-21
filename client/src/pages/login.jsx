@@ -46,8 +46,8 @@ export default function Login() {
       <div className="w-full max-w-[980px] lg:bg-card lg:rounded-[28px] lg:p-3 lg:grid lg:grid-cols-[1.05fr_1fr] lg:shadow-[0_20px_60px_rgba(14,17,22,0.08)]">
         {/* Hero panel */}
         <div className="relative bg-hero overflow-hidden rounded-b-[28px] lg:rounded-[22px] px-6 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-8 lg:p-8 lg:min-h-[560px] flex flex-col">
-          <div className="inline-flex items-center gap-2 bg-card rounded-full pl-1.5 pr-4 h-11 font-bold text-[15px] tracking-tight self-start">
-            <span className="w-8 h-8 rounded-full bg-hero grid place-items-center"><img src="/fundora_logo.svg" alt="" className="w-5 h-5" /></span>
+          <div className="inline-flex items-center gap-2 font-bold text-lg tracking-tight self-start">
+            <img src="/fundora_logo.svg" alt="" className="w-7 h-7" />
             Fundora
           </div>
           <h1 className="text-[30px] lg:text-[40px] font-bold tracking-[-0.035em] leading-[1.05] mt-8 lg:mt-14 max-w-sm">

@@ -9,7 +9,7 @@ import { Card } from '../components/ui/card'
 import { Button, IconButton } from '../components/ui/button'
 import { FieldInput } from '../components/ui/fieldInput'
 import { EmptyState } from '../components/ui/emptyState'
-import { Skeleton } from '../components/ui/skeleton'
+import { Loading } from '../components/ui/spinner'
 import { BankAvatar } from '../components/ui/avatar'
 import { PlusIcon, TrashIcon } from '../components/ui/icons'
 
@@ -34,10 +34,6 @@ function DeleteButton({ name, onClick, loading }) {
       <TrashIcon className="w-3.5 h-3.5" />
     </IconButton>
   )
-}
-
-function ListSkeleton() {
-  return <div className="space-y-2">{Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-12" />)}</div>
 }
 
 function BanksTab({ userId }) {
@@ -94,7 +90,7 @@ function BanksTab({ userId }) {
       </Card>
 
       <Card title="Your banks" subtitle="Balances start from the initial balance you set here">
-        {loading ? <ListSkeleton />
+        {loading ? <Loading className="py-10" />
           : banks.length === 0 ? <EmptyState title="No banks added yet" body="Add the banks and e-wallets you pay from." />
           : (
             <ul className="divide-y divide-line">
@@ -164,7 +160,7 @@ function NameListTab({ userId, table, singular, plural, placeholder, emptyBody }
       </Card>
 
       <Card title={`Your ${plural}`}>
-        {loading ? <ListSkeleton />
+        {loading ? <Loading className="py-10" />
           : rows.length === 0 ? <EmptyState title={`No ${plural} added yet`} body={emptyBody} />
           : (
             <ul className="divide-y divide-line">

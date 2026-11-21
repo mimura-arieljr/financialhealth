@@ -17,7 +17,7 @@ import { PageHeader } from '../components/ui/pageHeader'
 import { Toggle } from '../components/ui/toggle'
 import { EmptyState } from '../components/ui/emptyState'
 import { ErrorBanner } from '../components/ui/errorBanner'
-import { Skeleton } from '../components/ui/skeleton'
+import { Loading } from '../components/ui/spinner'
 import { RowActions } from '../components/ui/rowActions'
 import { CategoryAvatar } from '../components/ui/avatar'
 import { PlusIcon } from '../components/ui/icons'
@@ -200,7 +200,7 @@ export default function Recurring() {
       <Card>
         <ErrorBanner message={payError} />
         {loading ? (
-          <div className="space-y-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14" />)}</div>
+          <Loading />
         ) : items.length === 0 ? (
           <EmptyState title="No recurring expenses yet" body="Add bills and subscriptions to see what's due and pay them in one tap."
             action={<Button icon={<PlusIcon />} onClick={() => setShowAdd(true)}>Add recurring</Button>} />

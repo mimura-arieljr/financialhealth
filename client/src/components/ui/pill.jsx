@@ -30,13 +30,13 @@ export function Chip({ dot = 'ink', to, children }) {
 }
 
 // Change pill coloured by meaning: green for good news, grey otherwise
-export function DeltaPill({ pct, goodWhen, suffix, className = '' }) {
+export function DeltaPill({ pct, goodWhen, suffix, onDark = false, className = '' }) {
   const tone = deltaTone(pct, goodWhen)
   if (!tone) return null
   const arrow = pct > 0 ? '↑ ' : pct < 0 ? '↓ ' : ''
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs ${className}`}>
-      <span className={`rounded-full px-2 py-0.5 font-bold tnum ${tone === 'good' ? 'bg-good-bg text-good' : 'bg-white/70 text-muted'}`}>
+      <span className={`rounded-full px-2 py-0.5 font-bold tnum ${tone === 'good' ? 'bg-good-bg text-good' : onDark ? 'bg-white/15 text-white' : 'bg-white/70 text-muted'}`}>
         {arrow}{Math.abs(pct)}%
       </span>
       {suffix && <span>{suffix}</span>}

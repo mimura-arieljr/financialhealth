@@ -17,7 +17,7 @@ export function KpiTiles({ data, now }) {
   return (
     <div className="grid grid-cols-2 auto-rows-fr gap-2.5">
       <StatTile hero label="Spent this month" icon={<SpendIcon className={ICON} />} value={fmtPeso(spent)}
-        footer={<DeltaPill pct={compareMonth(data.expenses, current, now).pct} goodWhen="down" suffix={vs} />} />
+        footer={<DeltaPill pct={compareMonth(data.expenses, current, now).pct} goodWhen="down" suffix={vs} onDark />} />
       <StatTile label="Earned this month" icon={<IncomeIcon className={ICON} />} value={fmtPeso(earned)}
         footer={<DeltaPill pct={compareMonth(data.revenues, current, now).pct} goodWhen="up" suffix={vs} />} />
       <StatTile label="Net this month" icon={<NetIcon className={ICON} />}

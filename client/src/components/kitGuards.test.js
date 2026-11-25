@@ -93,8 +93,8 @@ describe('layout guards for the final review findings', () => {
     expect(wordmark?.value).toMatch(/max-\[379px\]:sr-only/)
   })
 
-  it('does not paint a falling net worth red (balance down is grey news)', () => {
-    expect(read('pages/analytics.jsx')).not.toMatch(/netWorthChange < 0 \? 'alert'/)
+  it('paints a falling net worth red (bad news is red)', () => {
+    expect(read('pages/analytics.jsx')).toMatch(/netWorthChange < 0 \? 'alert'/)
   })
 })
 

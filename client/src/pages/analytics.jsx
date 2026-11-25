@@ -98,7 +98,7 @@ export default function Analytics() {
         headline={analyticsHeadline({ savingsRate, monthName: monthName(currentMonth) })}
         chips={<>
           {projectedYearEnd !== null && <Chip dot={projectedYearEnd < 0 ? 'alert' : 'cyan'}>Projected year-end {fmtShort(projectedYearEnd)}</Chip>}
-          {!netWorthFlat && <Chip dot={netWorthChange < 0 ? 'neutral' : 'good'}>Net worth {netWorthChange < 0 ? '↓' : '↑'} {fmtShort(Math.abs(netWorthChange))} in 12 months</Chip>}
+          {!netWorthFlat && <Chip dot={netWorthChange < 0 ? 'alert' : 'good'}>Net worth {netWorthChange < 0 ? '↓' : '↑'} {fmtShort(Math.abs(netWorthChange))} in 12 months</Chip>}
         </>}
       />
 

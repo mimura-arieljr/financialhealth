@@ -41,12 +41,12 @@ export const pctChange = (current, previous, decimals = 0) => {
   return Math.round(((Number(current) - prev) / Math.abs(prev)) * 100 * f) / f
 }
 
-// Colour by meaning: good news green, anything else neutral grey
+// Colour by meaning: good news green, bad news red, no change grey
 export const deltaTone = (pct, goodWhen) => {
   if (pct === null || pct === undefined) return null
   if (pct === 0) return 'neutral'
   const up = pct > 0
-  return (goodWhen === 'up') === up ? 'good' : 'neutral'
+  return (goodWhen === 'up') === up ? 'good' : 'bad'
 }
 
 export const localDateStr = (d) =>

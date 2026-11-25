@@ -68,9 +68,9 @@ describe('pctChange and deltaTone', () => {
   })
   it('deltaTone colours by meaning', () => {
     expect(deltaTone(-12, 'down')).toBe('good')
-    expect(deltaTone(12, 'down')).toBe('neutral')
+    expect(deltaTone(12, 'down')).toBe('bad')
     expect(deltaTone(5, 'up')).toBe('good')
-    expect(deltaTone(-5, 'up')).toBe('neutral')
+    expect(deltaTone(-5, 'up')).toBe('bad')
     expect(deltaTone(0, 'up')).toBe('neutral')
     expect(deltaTone(null, 'up')).toBeNull()
   })

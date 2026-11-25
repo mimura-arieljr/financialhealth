@@ -26,7 +26,7 @@ export function LogoPill() {
 
 export function TopBar({ email }) {
   return (
-    <header className="max-w-[1320px] mx-auto px-4 lg:px-6 pt-[calc(0.75rem+env(safe-area-inset-top))] lg:pt-5 pb-4 lg:pb-6 flex items-center justify-between gap-3">
+    <header className="max-w-shell mx-auto px-4 lg:px-6 pt-[calc(0.75rem+env(safe-area-inset-top))] lg:pt-5 pb-4 lg:pb-6 flex items-center justify-between gap-3">
       <LogoPill />
 
       <nav aria-label="Main" className="hidden lg:flex bg-card rounded-full p-1.5 gap-0.5">

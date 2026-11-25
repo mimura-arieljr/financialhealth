@@ -28,6 +28,11 @@
   --radius-row: 14px;
 }
 
+/* Text and spacing grow a little on wide screens (16px up to 18px at 2560px) */
+html {
+  font-size: clamp(16px, calc(10px + 0.3125vw), 18px);
+}
+
 html,
 body {
   background-color: var(--color-canvas);
@@ -38,6 +43,11 @@ body {
 
 @utility bg-hero {
   background-image: linear-gradient(150deg, #8AFDFF, #00EFFA 45%, #00CFE3);
+}
+
+/* App width: 1320px on laptops, widening with the screen up to 1920px */
+@utility max-w-shell {
+  max-width: clamp(1320px, 80vw, 1920px);
 }
 
 @utility tnum {

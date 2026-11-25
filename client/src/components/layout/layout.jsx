@@ -26,7 +26,7 @@ export default function Layout() {
       <QuickAddProvider>
         <div className="min-h-dvh bg-canvas">
           <TopBar email={user?.email} />
-          <div className="max-w-[1320px] mx-auto px-4 lg:px-6 flex gap-5 pb-28 lg:pb-12">
+          <div className="max-w-shell mx-auto px-4 lg:px-6 flex gap-5 pb-28 lg:pb-12">
             <QuickRail onSignOut={handleSignOut} />
             <main ref={mainRef} className="flex-1 min-w-0">
               <Outlet />

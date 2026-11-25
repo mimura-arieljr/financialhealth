@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useQuickAdd } from '../../hooks/useQuickAdd'
 import { IconButton } from '../ui/button'
-import { PlusIcon, SpendIcon, IncomeIcon, TransferIcon, LogoutIcon } from '../ui/icons'
+import { PlusIcon, BagIcon, BanknotesIcon, TransferIcon, LogoutIcon } from '../ui/icons'
 
 const ACTIONS = [
-  { kind: 'expense', label: 'Add expense', Icon: SpendIcon },
-  { kind: 'revenue', label: 'Add revenue', Icon: IncomeIcon },
+  { kind: 'expense', label: 'Add expense', Icon: BagIcon },
+  { kind: 'revenue', label: 'Add revenue', Icon: BanknotesIcon },
   { kind: 'transfer', label: 'New transfer', Icon: TransferIcon },
 ]
 

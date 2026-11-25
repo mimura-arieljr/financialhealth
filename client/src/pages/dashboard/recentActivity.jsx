@@ -6,7 +6,7 @@ import { Card } from '../../components/ui/card'
 import { FilterPill } from '../../components/ui/filterPill'
 import { CategoryAvatar } from '../../components/ui/avatar'
 import { EmptyState } from '../../components/ui/emptyState'
-import { IncomeIcon, TransferIcon } from '../../components/ui/icons'
+import { BanknotesIcon, TransferIcon } from '../../components/ui/icons'
 import { SearchField } from '../../components/ui/searchField'
 
 const TYPES = [
@@ -16,7 +16,7 @@ const TYPES = [
 ]
 
 function RowIcon({ row, colors }) {
-  if (row.type === 'revenue') return <span className="w-7 h-7 rounded-[9px] bg-good-bg text-good grid place-items-center shrink-0"><IncomeIcon className="w-3.5 h-3.5" /></span>
+  if (row.type === 'revenue') return <span className="w-7 h-7 rounded-[9px] bg-good-bg text-good grid place-items-center shrink-0"><BanknotesIcon className="w-3.5 h-3.5" /></span>
   if (row.type === 'transfer') return <span className="w-7 h-7 rounded-[9px] bg-sub text-cyan-ink grid place-items-center shrink-0"><TransferIcon className="w-3.5 h-3.5" /></span>
   return <CategoryAvatar name={row.category} color={categoryColor(colors, row.categoryId)} size="sm" />
 }

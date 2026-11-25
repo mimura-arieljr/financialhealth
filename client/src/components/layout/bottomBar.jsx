@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useQuickAdd } from '../../hooks/useQuickAdd'
-import { HomeIcon, ListIcon, PlusIcon, RepeatIcon, MoreIcon, IncomeIcon, TransferIcon, ChartIcon, SparkleIcon, GearIcon, LogoutIcon } from '../ui/icons'
+import { HomeIcon, ListIcon, PlusIcon, RepeatIcon, MoreIcon, BagIcon, BanknotesIcon, TransferIcon, ChartIcon, SparkleIcon, GearIcon, LogoutIcon } from '../ui/icons'
 import { Sheet, SheetItem } from './sheet'
 
 const MORE_PATHS = ['/revenues', '/transfers', '/analytics', '/ai', '/settings']
@@ -43,14 +43,14 @@ export function BottomBar({ onSignOut }) {
 
       {open === 'add' && (
         <Sheet title="Add" onClose={close}>
-          <SheetItem icon={PlusIcon} label="Expense" onClick={() => add('expense')} />
-          <SheetItem icon={IncomeIcon} label="Revenue" onClick={() => add('revenue')} />
+          <SheetItem icon={BagIcon} label="Expense" onClick={() => add('expense')} />
+          <SheetItem icon={BanknotesIcon} label="Revenue" onClick={() => add('revenue')} />
           <SheetItem icon={TransferIcon} label="Transfer" onClick={() => add('transfer')} />
         </Sheet>
       )}
       {open === 'more' && (
         <Sheet title="More" onClose={close}>
-          <SheetItem icon={IncomeIcon} label="Revenues" to="/revenues" onClick={close} />
+          <SheetItem icon={BanknotesIcon} label="Revenues" to="/revenues" onClick={close} />
           <SheetItem icon={TransferIcon} label="Transfers" to="/transfers" onClick={close} />
           <SheetItem icon={ChartIcon} label="Analytics" to="/analytics" onClick={close} />
           <SheetItem icon={SparkleIcon} label="AI Chat" to="/ai" onClick={close} />

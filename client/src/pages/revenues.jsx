@@ -21,7 +21,7 @@ import { EmptyState } from '../components/ui/emptyState'
 import { Loading } from '../components/ui/spinner'
 import { RowActions } from '../components/ui/rowActions'
 import { BankPill } from '../components/ui/avatar'
-import { IncomeIcon, PlusIcon } from '../components/ui/icons'
+import { BanknotesIcon, PlusIcon } from '../components/ui/icons'
 import { RevenueForm } from '../components/forms/revenueForm'
 
 export default function Revenues() {
@@ -119,7 +119,7 @@ export default function Revenues() {
                 {day.rows.map(r => (
                   <div key={r.id} className="group relative flex items-center gap-3 px-2 py-2 rounded-row hover:bg-sub transition-colors">
                     <button type="button" className="md:hidden absolute inset-0 rounded-row" aria-label={`Edit ${r.description}`} onClick={() => setEditing(r)} />
-                    <span className="w-9 h-9 rounded-[12px] bg-good-bg text-good grid place-items-center shrink-0"><IncomeIcon /></span>
+                    <span className="w-9 h-9 rounded-[12px] bg-good-bg text-good grid place-items-center shrink-0"><BanknotesIcon /></span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold truncate">{r.description}</p>
                       <p className="md:hidden text-xs text-muted truncate">{r.banks?.name}</p>
